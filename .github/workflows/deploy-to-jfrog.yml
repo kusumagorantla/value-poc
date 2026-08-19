@@ -40,7 +40,56 @@ jobs:
           echo "timestamp=${TIMESTAMP}" >> $GITHUB_OUTPUT
 
       # ============================================
-      # DOCKER LOGIN TO JFROG CLOUD
+      # ENSURE REPOSITORIES EXIST
+      # ============================================
+      - name: Ensure Docker repository exists
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -u "${{ secrets.JFROG_USER }}:${{ secrets.JFROG_PASSWORD }}" \
+            "https://valeodemo.jfrog.io/artifactory/api/repositories/${{ env.DOCKER_REPO }}")
+          
+          if [ "$HTTP_CODE" = "404" ]; then
+            echo "Repository ${{ env.DOCKER_REPO }} not found. Creating..."
+            curl -X PUT \
+              "https://valeodemo.jfrog.io/artifactory/api/repositories/${{ env.DOCKER_REPO }}" \
+              -u "${{ secrets.JFROG_USER }}:${{ secrets.JFROG_PASSWORD }}" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "key": "${{ env.DOCKER_REPO }}",
+                "rclass": "local",
+                "packageType": "docker",
+                "dockerApiVersion": "V2",
+                "enableV1": false
+              }'
+            echo "✅ Docker repository created"
+          else
+            echo "✅ Docker repository exists"
+          fi
+
+      - name: Ensure Generic repository exists
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -u "${{ secrets.JFROG_USER }}:${{ secrets.JFROG_PASSWORD }}" \
+            "https://valeodemo.jfrog.io/artifactory/api/repositories/${{ env.ARTIFACT_REPO }}")
+          
+          if [ "$HTTP_CODE" = "404" ]; then
+            echo "Repository ${{ env.ARTIFACT_REPO }} not found. Creating..."
+            curl -X PUT \
+              "https://valeodemo.jfrog.io/artifactory/api/repositories/${{ env.ARTIFACT_REPO }}" \
+              -u "${{ secrets.JFROG_USER }}:${{ secrets.JFROG_PASSWORD }}" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "key": "${{ env.ARTIFACT_REPO }}",
+                "rclass": "local",
+                "packageType": "generic"
+              }'
+            echo "✅ Generic repository created"
+          else
+            echo "✅ Generic repository exists"
+          fi
+
+      # ============================================
+      # DOCKER LOGIN
       # ============================================
       - name: Docker Login to JFrog
         uses: docker/login-action@v3
@@ -191,13 +240,6 @@ jobs:
             --password="${{ secrets.JFROG_PASSWORD }}" \
             "artifacts/build-info.json" \
             "${{ env.ARTIFACT_REPO }}/jarvis/builds/${{ steps.version.outputs.version }}/"
-          
-          jf rt upload \
-            --url="https://valeodemo.jfrog.io" \
-            --user="${{ secrets.JFROG_USER }}" \
-            --password="${{ secrets.JFROG_PASSWORD }}" \
-            "artifacts/dockerfiles/*" \
-            "${{ env.ARTIFACT_REPO }}/jarvis/dockerfiles/"
 
       # ============================================
       # SUMMARY
@@ -210,16 +252,12 @@ jobs:
           echo ""
           echo "Version: ${{ steps.version.outputs.version }}"
           echo "Branch: ${{ steps.version.outputs.branch }}"
-          echo "Commit: ${{ github.sha }}"
           echo ""
-          echo "🐳 Docker Images Pushed:"
+          echo "🐳 Docker Images:"
           echo "   - valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.version }}"
           echo "   - valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.version }}"
           echo ""
-          echo "📁 Artifacts Uploaded:"
-          echo "   - ${{ env.ARTIFACT_REPO }}/jarvis/deployments/${{ steps.version.outputs.version }}/"
-          echo "   - ${{ env.ARTIFACT_REPO }}/jarvis/configs/docker-compose-jfrog.yml"
-          echo "   - ${{ env.ARTIFACT_REPO }}/jarvis/builds/${{ steps.version.outputs.version }}/build-info.json"
+          echo "📁 Artifacts: ${{ env.ARTIFACT_REPO }}/jarvis/deployments/${{ steps.version.outputs.version }}/"
           echo "============================================"
 
       - name: Upload to GitHub Artifacts
