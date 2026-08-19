@@ -13,6 +13,11 @@ spec:
     matchLabels:
       app: jarvis-grafana
   template:
+    spec:
+      securityContext:
+        runAsUser: 472
+        runAsGroup: 472
+        fsGroup: 472
     metadata:
       labels:
         app: jarvis-grafana
