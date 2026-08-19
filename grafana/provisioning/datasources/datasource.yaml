@@ -1,0 +1,18 @@
+apiVersion: 1
+
+datasources:
+  - name: PostgreSQL-JarvisTraceability
+    type: postgres
+    access: proxy
+    url: jarvis-db:5432
+    user: jarvis_user
+    secureJsonData:
+      password: jarvis_password
+    jsonData:
+      database: jarvis_traceability
+      sslmode: disable
+      maxOpenConns: 20
+      maxIdleConns: 10
+      connMaxLifetime: 14400
+      postgresVersion: 1700
+    isDefault: true

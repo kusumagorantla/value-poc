@@ -1,0 +1,30 @@
+import subprocess
+import json
+
+workspace = "_bmad-output/specs/spec-jarvis-traceability"
+
+entries = [
+    ("capability", "CAP-2: Standard Process Results Data Saving Function (BUC-1) - Core Edge function to receive and record process results with process, product, result, and time context."),
+    ("capability", "CAP-3: Degraded Mode & Zero Data Loss Recording (BUC-1) - Process and record incomplete/unknown context data in degraded mode with 0% data loss."),
+    ("capability", "CAP-4: Synchronous Latency & Cycle Time Protection (BUC-1) - Execute synchronous recording calls with <50ms response time to protect machine cycle times."),
+    ("capability", "CAP-5: API Endpoints for External Traceability Integration (BUC-2) - Authenticated REST API endpoints for sync/async process result recording."),
+    ("capability", "CAP-6: Interactive Demo & PLC Payload Simulator UI - Web interface for process model management, PLC trigger simulation, and real-time process results auditing."),
+    ("constraint", "CON-1: Repetitive Manufacturing Framework - Operating under repetitive manufacturing without production orders."),
+    ("constraint", "CON-2: Edge PC Deployment Architecture - Local containerized Edge services with PostgreSQL database at line level."),
+    ("constraint", "CON-3: Non-Validation Policy - Process result recording function must store data without validating quality pass/fail status against LSL/USL."),
+    ("constraint", "CON-4: Authenticated API Access - API calls must use non-anonymous authentication (badge/token/API key)."),
+    ("constraint", "CON-5: Explicit Scope Boundaries - Serial number lifecycle, interlocking constraints, and component traceability are out of scope."),
+    ("decision", "Tech Stack Decision: .NET 8 / Python FastAPI Backend + PostgreSQL 17 + React UI for interactive demoability and low-latency compliance."),
+    ("event", "Spec Creation Initiated from Valeo MOM VIB Document (BUC-0, BUC-1, BUC-2)")
+]
+
+for entry_type, text in entries:
+    cmd = [
+        "python", "_bmad/scripts/memlog.py", "append",
+        "--workspace", workspace,
+        "--type", entry_type,
+        "--text", text
+    ]
+    subprocess.run(cmd, check=True)
+
+print("Memlog successfully populated.")
