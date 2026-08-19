@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JARVIS Grafana Dashboards — Valeo MOM UI System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* VALEO MOM / JARVIS — UX Agent Design System
+   Layout and dashboard information architecture are intentionally unchanged.
+   Only visual treatment, component styling, typography and spacing are governed here. */
+:root{
+  --g-bg:#F6F7F9;
+  --g-panel:#FFFFFF;
+  --g-surface-2:#F8F9FB;
+  --g-border:#D9DEE6;
+  --g-border-2:#CBD5E1;
+
+  --g-text:#526078;
+  --g-text-weak:#7B8799;
+  --g-text-strong:#15233B;
+
+  --g-blue:#0057D9;
+  --g-blue-dark:#0047B3;
+  --g-blue-tint:#EAF2FF;
+
+  --g-green:#35A936;
+  --g-green-tint:#ECF7E9;
+
+  --g-yellow:#8A6A2F;
+  --g-yellow-tint:#F3EFE6;
+
+  --g-red:#D92D20;
+  --g-red-tint:#FDEDEC;
+
+  --g-purple:#5369A8;
+  --g-purple-tint:#EEF1F8;
+
+  --g-advisory:#E8EBF0;
+  --g-advisory-border:#C9D0D8;
+  --g-highlight:#DDE2E8;
+  --g-header:#FFFFFF;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  font-family:"IBM Plex Sans",sans-serif;
+  background:var(--g-bg);
+  color:var(--g-text);
+  font-size:13px;
+  line-height:1.35;
+  -webkit-font-smoothing:antialiased;
+}
+
+.mono{font-family:"IBM Plex Mono",monospace}
+
+/* ---- top chrome ---- */
+.topbar{
+  height:44px;
+  background:var(--g-header);
+  border-bottom:1px solid var(--g-border);
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:0 16px;
+  position:sticky;
+  top:0;
+  z-index:9;
+}
+
+.logo{
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:var(--g-blue);
+  flex:none;
+}
+
+.dash-name{
+  font-size:13.5px;
+  font-weight:600;
+  color:var(--g-text-strong);
+}
+
+.crumb{
+  color:var(--g-text-weak);
+  font-size:12px;
+}
+
+.spacer{margin-left:auto}
+
+.pickers{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.picker{
+  background:var(--g-panel);
+  border:1px solid var(--g-border-2);
+  border-radius:6px;
+  padding:5px 9px;
+  font-size:12px;
+  color:var(--g-text);
+  font-family:"IBM Plex Mono",monospace;
+}
+
+.refresh{
+  color:var(--g-green);
+  font-family:"IBM Plex Mono",monospace;
+  font-size:12px;
+  font-weight:500;
+}
+
+/* ---- dashboard tabs ---- */
+.tabs{
+  display:flex;
+  gap:2px;
+  padding:10px 16px 0;
+  border-bottom:1px solid var(--g-border);
+  background:var(--g-bg);
+}
+
+.tabs button{
+  all:unset;
+  cursor:pointer;
+  padding:8px 15px 9px;
+  font-size:12px;
+  color:var(--g-text-weak);
+  border-bottom:2px solid transparent;
+  font-family:inherit;
+  font-weight:500;
+}
+
+.tabs button:hover{color:var(--g-text-strong)}
+
+.tabs button[aria-current="page"]{
+  color:var(--g-blue);
+  border-bottom-color:var(--g-blue);
+  font-weight:600;
+}
+
+.tabs button:focus-visible{
+  outline:2px solid var(--g-blue);
+  outline-offset:-2px;
+  border-radius:3px;
+}
+
+/* ---- variable row ---- */
+.vars{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  padding:12px 16px;
+  flex-wrap:wrap;
+}
+
+.var{display:flex;align-items:center}
+
+.var label{
+  background:var(--g-surface-2);
+  border:1px solid var(--g-border-2);
+  border-right:0;
+  padding:6px 9px;
+  font-size:11.5px;
+  color:var(--g-text-weak);
+  border-radius:6px 0 0 6px;
+}
+
+.var .val{
+  background:var(--g-panel);
+  border:1px solid var(--g-border-2);
+  padding:6px 11px;
+  font-size:12px;
+  border-radius:0 6px 6px 0;
+  font-family:"IBM Plex Mono",monospace;
+  color:var(--g-text-strong);
+  min-width:120px;
+}
+
+/* ---- grid + panels ---- */
+.grid{
+  display:grid;
+  gap:12px;
+  padding:0 16px 24px;
+}
+
+.g12{grid-template-columns:repeat(12,1fr)}
+
+.panel{
+  background:var(--g-panel);
+  border:1px solid var(--g-border);
+  border-radius:8px;
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  box-shadow:0 1px 2px rgba(21,35,59,.04);
+}
+
+.panel-h{
+  padding:12px 16px 6px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.panel-h h3{
+  font-size:13px;
+  font-weight:600;
+  color:var(--g-text-strong);
+  letter-spacing:0;
+}
+
+.panel-h .hint{
+  font-size:11px;
+  color:var(--g-text-weak);
+}
+
+.panel-b{
+  padding:8px 16px 16px;
+  flex:1;
+  min-width:0;
+}
+
+.span3{grid-column:span 3}
+.span4{grid-column:span 4}
+.span5{grid-column:span 5}
+.span6{grid-column:span 6}
+.span7{grid-column:span 7}
+.span8{grid-column:span 8}
+.span9{grid-column:span 9}
+.span12{grid-column:span 12}
+
+/* ---- stat panel ---- */
+.stat{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  height:100%;
+  padding:4px 0;
+}
+
+.stat .v{
+  font-size:24px;
+  font-weight:600;
+  line-height:1.15;
+  font-family:"IBM Plex Mono",monospace;
+  color:var(--g-text-strong);
+}
+
+.stat .l{
+  font-size:11.5px;
+  color:var(--g-text-weak);
+  margin-top:5px;
+}
+
+.v-green{color:var(--g-green)!important}
+.v-red{color:var(--g-red)!important}
+.v-yellow{color:var(--g-yellow)!important}
+.v-blue{color:var(--g-blue)!important}
+.v-purple{color:var(--g-purple)!important}
+.v-text{color:var(--g-text-strong)!important}
+
+/* ---- tables ---- */
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+}
+
+th{
+  text-align:left;
+  font-weight:600;
+  font-size:10px;
+  color:var(--g-text-weak);
+  text-transform:uppercase;
+  letter-spacing:.02em;
+  padding:8px 8px;
+  border-bottom:1px solid var(--g-border);
+  white-space:nowrap;
+}
+
+td{
+  height:44px;
+  padding:6px 8px;
+  border-bottom:1px solid var(--g-border);
+  white-space:nowrap;
+}
+
+tbody tr:hover{background:var(--g-blue-tint)}
+
+.num{
+  text-align:right;
+  font-family:"IBM Plex Mono",monospace;
+}
+
+.cell-mono{
+  font-family:"IBM Plex Mono",monospace;
+  color:var(--g-text-strong);
+}
+
+.scroll{overflow-x:auto}
+
+/* ---- semantic tags ---- */
+.tag{
+  display:inline-block;
+  font-size:10px;
+  font-weight:600;
+  padding:3px 7px;
+  border-radius:999px;
+  font-family:"IBM Plex Sans",sans-serif;
+  line-height:1.2;
+}
+
+.t-green{background:var(--g-green-tint);color:var(--g-green)}
+.t-purple{background:var(--g-purple-tint);color:var(--g-purple)}
+.t-yellow{background:var(--g-yellow-tint);color:var(--g-yellow)}
+.t-red{background:var(--g-red-tint);color:var(--g-red)}
+.t-grey{background:var(--g-advisory);color:var(--g-text)}
+
+.legend{
+  display:flex;
+  gap:14px;
+  font-size:11px;
+  color:var(--g-text-weak);
+  padding:6px 0 0;
+  flex-wrap:wrap;
+}
+
+.legend i{
+  font-style:normal;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+}
+
+.key{
+  width:11px;
+  height:3px;
+  border-radius:2px;
+  display:inline-block;
+}
+
+.note{
+  font-size:11.5px;
+  color:var(--g-text-weak);
+  padding:8px 16px 0;
+}
+
+.hidden{display:none!important}
+
+svg{display:block;width:100%}
+
+@media (max-width:900px){
+  .span3,.span4,.span5,.span6,.span7,.span8,.span9{grid-column:span 12}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="logo" aria-hidden="true"></span>
+  <span class="crumb">JARVIS /</span>
+  <span class="dash-name" id="dashName">Find a part</span>
+  <span class="spacer"></span>
+  <div class="pickers">
+    <span class="picker">jarvis_edge</span>
+    <span class="picker">Last 6 hours</span>
+    <span class="refresh">↻ 5s</span>
+  </div>
+</div>
+
+<nav class="tabs" aria-label="Dashboards">
+  <button aria-current="page" onclick="show('d1')">D1 · Find a part</button>
+  <button onclick="show('d2')">D2 · Track a value</button>
+  <button onclick="show('d3')">D3 · System health</button>
+</nav>
+
+<!-- ==================== D1 — FIND A PART ==================== -->
+<section id="d1">
+  <div class="vars">
+    <div class="var"><label>serial</label><span class="val">cee348d8-daa0-4730-8d5e-ac59311af94b</span></div>
+    <div class="var"><label>part</label><span class="val">MATERIAL-1</span></div>
+  </div>
+
+  <div class="grid g12">
+    <div class="panel span3"><div class="panel-b"><div class="stat">
+      <div class="v v-text">MATERIAL-1</div><div class="l">Part number</div></div></div></div>
+    <div class="panel span3"><div class="panel-b"><div class="stat">
+      <div class="v v-text">6 / 6</div><div class="l">Steps completed</div></div></div></div>
+    <div class="panel span3"><div class="panel-b"><div class="stat">
+      <div class="v v-text">4 m 12 s</div><div class="l">First seen to last seen</div></div></div></div>
+    <div class="panel span3"><div class="panel-b"><div class="stat">
+      <div class="v v-green">PASS</div><div class="l">All step results = 1</div></div></div></div>
+
+    <div class="panel span12">
+      <div class="panel-h"><h3>Journey through the line</h3>
+        <span class="hint">process_execution</span></div>
+      <div class="panel-b scroll">
+        <table>
+          <thead><tr><th>Recorded at</th><th>Station</th><th>Step</th>
+            <th class="num">Result</th><th class="num">Cycle time</th>
+            <th class="num">WPC</th><th>Degraded</th></tr></thead>
+          <tbody>
+            <tr><td class="cell-mono">11:11:09.412</td><td class="cell-mono">ST060.1</td><td>11001 Housing Screwing</td><td class="num">1</td><td class="num">35.12 s</td><td class="num">587</td><td><span class="tag t-grey">—</span></td></tr>
+            <tr><td class="cell-mono">11:11:52.880</td><td class="cell-mono">ST070</td><td>11002 Body Sub Assembly 1</td><td class="num">1</td><td class="num">41.60 s</td><td class="num">587</td><td><span class="tag t-grey">—</span></td></tr>
+            <tr><td class="cell-mono">11:12:38.104</td><td class="cell-mono">ST080</td><td>11003 Body Sub Assembly 2</td><td class="num">1</td><td class="num">43.22 s</td><td class="num">587</td><td><span class="tag t-grey">—</span></td></tr>
+            <tr><td class="cell-mono">11:13:29.667</td><td class="cell-mono">ST100</td><td>11004 Assembly Gear</td><td class="num">1</td><td class="num">49.90 s</td><td class="num">587</td><td><span class="tag t-purple">UNKNOWN_RESULT_DEF</span></td></tr>
+            <tr><td class="cell-mono">11:14:41.203</td><td class="cell-mono">ST110</td><td>11005 Final Test</td><td class="num">1</td><td class="num">68.44 s</td><td class="num">587</td><td><span class="tag t-grey">—</span></td></tr>
+            <tr><td class="cell-mono">11:15:21.019</td><td class="cell-mono">ST120</td><td>11006 Packing</td><td class="num">1</td><td class="num">18.07 s</td><td class="num">587</td><td><span class="tag t-grey">—</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel span12">
+      <div class="panel-h"><h3>Every value recorded for this part</h3>
+        <span class="hint">limits are the values that applied at the time of recording</span></div>
+      <div class="panel-b scroll">
+        <table>
+          <thead><tr><th>Station</th><th>Operation</th><th>Value</th>
+            <th class="num">Measured</th><th>UOM</th>
+            <th class="num">LSL</th><th class="num">LAL</th><th class="num">UAL</th><th class="num">USL</th>
+            <th>In spec</th></tr></thead>
+          <tbody>
+            <tr><td class="cell-mono">ST060.1</td><td>123021 Screw 1</td><td>50032 Angle</td><td class="num">90.2</td><td>DD</td><td class="num">80</td><td class="num">85</td><td class="num">95</td><td class="num">100</td><td><span class="tag t-green">yes</span></td></tr>
+            <tr><td class="cell-mono">ST060.1</td><td>123021 Screw 1</td><td>50033 Torque</td><td class="num">5.12</td><td>NU</td><td class="num">4.5</td><td class="num">4.7</td><td class="num">5.3</td><td class="num">5.5</td><td><span class="tag t-green">yes</span></td></tr>
+            <tr><td class="cell-mono">ST060.1</td><td>123022 Screw 2</td><td>50034 Angle</td><td class="num">96.4</td><td>DD</td><td class="num">80</td><td class="num">85</td><td class="num">95</td><td class="num">100</td><td><span class="tag t-yellow">alert band</span></td></tr>
+            <tr><td class="cell-mono">ST060.1</td><td>123022 Screw 2</td><td>50035 Torque</td><td class="num">5.09</td><td>NU</td><td class="num">4.5</td><td class="num">4.7</td><td class="num">5.3</td><td class="num">5.5</td><td><span class="tag t-green">yes</span></td></tr>
+            <tr><td class="cell-mono">ST060.1</td><td>123024 Screw 4</td><td>50129 Barcode read</td><td class="num">123-TRE-AC</td><td>—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td><span class="tag t-grey">n/a</span></td></tr>
+            <tr><td class="cell-mono">ST100</td><td>123056 Gear press</td><td>50130 (unnamed)</td><td class="num">4.81</td><td>—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td><span class="tag t-purple">no definition</span></td></tr>
+            <tr><td class="cell-mono">ST110</td><td>123071 Leak test</td><td>50201 Pressure drop</td><td class="num">1.94</td><td>MB</td><td class="num">0</td><td class="num">0.5</td><td class="num">2.0</td><td class="num">2.5</td><td><span class="tag t-green">yes</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <p class="note">One value was recorded against a definition that did not exist. It was kept, flagged, and a placeholder created — see the admin console.</p>
+</section>
+
+<!-- ==================== D2 — TRACK A VALUE ==================== -->
+<section id="d2" class="hidden">
+  <div class="vars">
+    <div class="var"><label>station</label><span class="val">ST060.1</span></div>
+    <div class="var"><label>parameter</label><span class="val">50033 Torque</span></div>
+    <div class="var"><label>category</label><span class="val">measurement</span></div>
+  </div>
+
+  <div class="grid g12">
+    <div class="panel span8">
+      <div class="panel-h"><h3>Value over time</h3><span class="hint">last 6 hours · 1,284 points</span></div>
+      <div class="panel-b">
+        <svg viewBox="0 0 800 250" height="250" role="img" aria-label="Torque over time with tolerance bands">
+          <rect x="46" y="8"   width="746" height="34"  fill="#FDEDEC"/>
+          <rect x="46" y="42"  width="746" height="30"  fill="#F3EFE6"/>
+          <rect x="46" y="72"  width="746" height="90"  fill="#ECF7E9"/>
+          <rect x="46" y="162" width="746" height="30"  fill="#F3EFE6"/>
+          <rect x="46" y="192" width="746" height="30"  fill="#FDEDEC"/>
+          <line x1="46" y1="42"  x2="792" y2="42"  stroke="#D92D20" stroke-width="1" stroke-dasharray="4 3"/>
+          <line x1="46" y1="72"  x2="792" y2="72"  stroke="#8A6A2F" stroke-width="1" stroke-dasharray="4 3"/>
+          <line x1="46" y1="117" x2="792" y2="117" stroke="#35A936" stroke-width="1" stroke-dasharray="2 4"/>
+          <line x1="46" y1="162" x2="792" y2="162" stroke="#8A6A2F" stroke-width="1" stroke-dasharray="4 3"/>
+          <line x1="46" y1="192" x2="792" y2="192" stroke="#D92D20" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="798" y="45"  fill="#D92D20" font-size="9" text-anchor="end" font-family="IBM Plex Mono">USL 5.5</text>
+          <text x="798" y="69"  fill="#8A6A2F" font-size="9" text-anchor="end" font-family="IBM Plex Mono">UAL 5.3</text>
+          <text x="798" y="114" fill="#35A936" font-size="9" text-anchor="end" font-family="IBM Plex Mono">nom 5.0</text>
+          <text x="798" y="159" fill="#8A6A2F" font-size="9" text-anchor="end" font-family="IBM Plex Mono">LAL 4.7</text>
+          <text x="798" y="189" fill="#D92D20" font-size="9" text-anchor="end" font-family="IBM Plex Mono">LSL 4.5</text>
+          <g fill="#7B8799" font-size="9" font-family="IBM Plex Mono" text-anchor="end">
+            <text x="40" y="46">5.5</text><text x="40" y="121">5.0</text><text x="40" y="196">4.5</text>
+          </g>
+          <path d="M46,124 L84,108 L122,131 L160,112 L198,96 L236,127 L274,140 L312,105 L350,88
+                   L388,119 L426,134 L464,101 L502,68 L540,113 L578,129 L616,110 L654,95
+                   L692,122 L730,136 L768,115 L792,120"
+                fill="none" stroke="#0057D9" stroke-width="1.6" stroke-linejoin="round"/>
+          <circle cx="502" cy="68" r="3" fill="#8A6A2F"/>
+          <g fill="#7B8799" font-size="9" font-family="IBM Plex Mono">
+            <text x="46" y="243">05:20</text><text x="230" y="243">06:50</text>
+            <text x="414" y="243">08:20</text><text x="598" y="243">09:50</text>
+            <text x="742" y="243">11:15</text>
+          </g>
+        </svg>
+        <div class="legend">
+          <i><span class="key" style="background:#0057D9"></span>measured value</i>
+          <i><span class="key" style="background:#35A936"></span>nominal band</i>
+          <i><span class="key" style="background:#8A6A2F"></span>alert band</i>
+          <i><span class="key" style="background:#D92D20"></span>out of spec</i>
+          <i>1 point entered the upper alert band at 08:52</i>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel span4">
+      <div class="panel-h"><h3>Distribution</h3><span class="hint">1,284 values</span></div>
+      <div class="panel-b">
+        <svg viewBox="0 0 380 250" height="250" role="img" aria-label="Histogram of torque values">
+          <g fill="#0057D9">
+            <rect x="30"  y="212" width="26" height="18"/>
+            <rect x="60"  y="188" width="26" height="42"/>
+            <rect x="90"  y="146" width="26" height="84"/>
+            <rect x="120" y="92"  width="26" height="138"/>
+            <rect x="150" y="52"  width="26" height="178"/>
+            <rect x="180" y="38"  width="26" height="192"/>
+            <rect x="210" y="66"  width="26" height="164"/>
+            <rect x="240" y="118" width="26" height="112"/>
+            <rect x="270" y="170" width="26" height="60"/>
+            <rect x="300" y="204" width="26" height="26"/>
+            <rect x="330" y="222" width="26" height="8"/>
+          </g>
+          <line x1="24" y1="230" x2="362" y2="230" stroke="#CBD5E1"/>
+          <g fill="#7B8799" font-size="9" font-family="IBM Plex Mono">
+            <text x="30" y="244">4.5</text><text x="150" y="244">4.9</text>
+            <text x="240" y="244">5.2</text><text x="330" y="244">5.5</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="panel span3"><div class="panel-b"><div class="stat">
+      <div class="v v-blue">5.02</div><div class="l">Average</div></div></div></div>
+    <div class="panel span3"><div class="panel-b"><div class="stat">
+      <div class="v v-blue">5.01</div><div class="l">Median</div></div></div></div>
+    <div class="panel span3"><div class="panel-b"><div class="stat">
+      <div class="v v-green">1.41</div><div class="l">Cpk</div></div></div></div>
+    <div class="panel span3"><div class="panel-b"><div class="stat">
+      <div class="v v-text">1,284</div><div class="l">Values in range</div></div></div></div>
+
+    <div class="panel span12">
+      <div class="panel-h"><h3>Data table</h3>
+        <span class="hint">matches the columns of the existing Barflow traceability report</span></div>
+      <div class="panel-b scroll">
+        <table>
+          <thead><tr><th>Work centre</th><th>Station</th><th>Product</th><th>Serial</th>
+            <th>Parameter</th><th class="num">Value</th><th>UOM</th>
+            <th class="num">LSL</th><th class="num">LAL</th><th class="num">UAL</th><th class="num">USL</th>
+            <th class="num">Result</th><th>Date time</th></tr></thead>
+          <tbody>
+            <tr><td class="cell-mono">APU1_NOC5</td><td class="cell-mono">ST060.1</td><td>MATERIAL-1</td><td class="cell-mono">cee348d8…</td><td>50033 Torque</td><td class="num">5.12</td><td>NU</td><td class="num">4.5</td><td class="num">4.7</td><td class="num">5.3</td><td class="num">5.5</td><td class="num">1</td><td class="cell-mono">11:15:21</td></tr>
+            <tr><td class="cell-mono">APU1_NOC5</td><td class="cell-mono">ST060.1</td><td>MATERIAL-1</td><td class="cell-mono">a41f9b02…</td><td>50033 Torque</td><td class="num">5.31</td><td>NU</td><td class="num">4.5</td><td class="num">4.7</td><td class="num">5.3</td><td class="num">5.5</td><td class="num">1</td><td class="cell-mono">11:14:47</td></tr>
+            <tr><td class="cell-mono">APU1_NOC5</td><td class="cell-mono">ST060.1</td><td>MATERIAL-1</td><td class="cell-mono">7d2c81ee…</td><td>50033 Torque</td><td class="num">4.96</td><td>NU</td><td class="num">4.5</td><td class="num">4.7</td><td class="num">5.3</td><td class="num">5.5</td><td class="num">1</td><td class="cell-mono">11:14:11</td></tr>
+            <tr><td class="cell-mono">APU1_NOC5</td><td class="cell-mono">NOC5_Furnace</td><td>—</td><td class="cell-mono">—</td><td>70012 Oxygen level</td><td class="num">2.44</td><td>—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">1</td><td class="cell-mono">11:14:02</td></tr>
+            <tr><td class="cell-mono">APU1_NOC5</td><td class="cell-mono">NOC5_Furnace</td><td>—</td><td class="cell-mono">—</td><td>70011 Dryer fan 1 speed</td><td class="num">100</td><td>—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">1</td><td class="cell-mono">11:14:02</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <p class="note">The last two rows come from a furnace — a continuous process with no serial and no part number. This dashboard works without them; D1 cannot.</p>
+</section>
+
+<!-- ==================== D3 — SYSTEM HEALTH ==================== -->
+<section id="d3" class="hidden">
+  <div class="vars">
+    <div class="var"><label>source</label><span class="val">all</span></div>
+    <div class="var"><label>window</label><span class="val">last 15 minutes</span></div>
+  </div>
+
+  <div class="grid g12">
+    <div class="panel span3"><div class="panel-b"><div class="stat">
+      <div class="v v-green">0</div><div class="l">Messages lost — gaps in the telegram counter</div></div></div></div>
+    <div class="panel span3"><div class="panel-b"><div class="stat">
+      <div class="v v-green">8.4 ms</div><div class="l">p99 latency · target under 15</div></div></div></div>
+    <div class="panel span3"><div class="panel-b"><div class="stat">
+      <div class="v v-blue">1,012 /s</div><div class="l">Messages recorded</div></div></div></div>
+    <div class="panel span3"><div class="panel-b"><div class="stat">
+      <div class="v v-purple">4.1 %</div><div class="l">Recorded in degraded mode</div></div></div></div>
+
+    <div class="panel span8">
+      <div class="panel-h"><h3>Recording latency</h3>
+        <span class="hint">server side — excludes network to the caller</span></div>
+      <div class="panel-b">
+        <svg viewBox="0 0 800 220" height="220" role="img" aria-label="Latency percentiles over time">
+          <line x1="46" y1="60" x2="792" y2="60" stroke="#D92D20" stroke-width="1" stroke-dasharray="5 4"/>
+          <text x="798" y="57" fill="#D92D20" font-size="9" text-anchor="end" font-family="IBM Plex Mono">target 15 ms</text>
+          <g stroke="#D9DEE6"><line x1="46" y1="110" x2="792" y2="110"/><line x1="46" y1="160" x2="792" y2="160"/></g>
+          <path d="M46,102 L120,105 L194,99 L268,108 L342,101 L416,112 L490,97 L564,104 L638,110 L712,100 L792,103"
+                fill="none" stroke="#35A936" stroke-width="1.5"/>
+          <path d="M46,92 L120,96 L194,88 L268,99 L342,90 L416,103 L490,86 L564,94 L638,101 L712,89 L792,93"
+                fill="none" stroke="#8A6A2F" stroke-width="1.5"/>
+          <path d="M46,82 L120,86 L194,76 L268,90 L342,79 L416,95 L490,74 L564,84 L638,92 L712,78 L792,83"
+                fill="none" stroke="#0057D9" stroke-width="1.5"/>
+          <g fill="#7B8799" font-size="9" font-family="IBM Plex Mono" text-anchor="end">
+            <text x="40" y="63">15</text><text x="40" y="113">10</text><text x="40" y="163">5</text>
+          </g>
+          <g fill="#7B8799" font-size="9" font-family="IBM Plex Mono">
+            <text x="46" y="205">11:00</text><text x="268" y="205">11:05</text>
+            <text x="490" y="205">11:10</text><text x="742" y="205">11:15</text>
+          </g>
+        </svg>
+        <div class="legend">
+          <i><span class="key" style="background:#35A936"></span>p50 · 4.9 ms</i>
+          <i><span class="key" style="background:#8A6A2F"></span>p95 · 6.7 ms</i>
+          <i><span class="key" style="background:#0057D9"></span>p99 · 8.4 ms</i>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel span4">
+      <div class="panel-h"><h3>Outcomes</h3><span class="hint">last 15 minutes</span></div>
+      <div class="panel-b">
+        <table>
+          <thead><tr><th>Status</th><th class="num">Count</th><th class="num">Share</th></tr></thead>
+          <tbody>
+            <tr><td><span class="tag t-green">RECORDED</span></td><td class="num">874,102</td><td class="num">95.1 %</td></tr>
+            <tr><td><span class="tag t-purple">RECORDED_DEGRADED</span></td><td class="num">37,690</td><td class="num">4.1 %</td></tr>
+            <tr><td><span class="tag t-yellow">RECORDED_PARTIAL</span></td><td class="num">2,754</td><td class="num">0.3 %</td></tr>
+            <tr><td><span class="tag t-grey">DUPLICATE_IGNORED</span></td><td class="num">4,591</td><td class="num">0.5 %</td></tr>
+            <tr><td><span class="tag t-red">REJECTED_UNPARSEABLE</span></td><td class="num">0</td><td class="num">0.0 %</td></tr>
+            <tr><td><span class="tag t-red">SYSTEM_UNAVAILABLE</span></td><td class="num">0</td><td class="num">0.0 %</td></tr>
+          </tbody>
+        </table>
+        <p class="note" style="padding:10px 0 0">The first four all mean the data is safely stored.</p>
+      </div>
+    </div>
+
+    <div class="panel span6">
+      <div class="panel-h"><h3>Why messages were degraded</h3>
+        <span class="hint">degraded is not an error — it is recorded, with context missing</span></div>
+      <div class="panel-b">
+        <svg viewBox="0 0 600 180" height="180" role="img" aria-label="Degradation reasons ranked">
+          <g font-family="IBM Plex Mono" font-size="10">
+            <text x="0" y="18"  fill="#7B8799">NO_SERIAL</text>
+            <rect x="150" y="8"   width="380" height="14" fill="#5369A8"/><text x="540" y="19" fill="#526078">21,908</text>
+            <text x="0" y="46"  fill="#7B8799">UNKNOWN_PART</text>
+            <rect x="150" y="36"  width="212" height="14" fill="#5369A8"/><text x="372" y="47" fill="#526078">12,204</text>
+            <text x="0" y="74"  fill="#7B8799">UNKNOWN_RESULT_DEF</text>
+            <rect x="150" y="64"  width="48"  height="14" fill="#5369A8"/><text x="208" y="75" fill="#526078">2,761</text>
+            <text x="0" y="102" fill="#7B8799">COUNT_MISMATCH</text>
+            <rect x="150" y="92"  width="24"  height="14" fill="#5369A8"/><text x="184" y="103" fill="#526078">1,377</text>
+            <text x="0" y="130" fill="#7B8799">TYPE_MISMATCH</text>
+            <rect x="150" y="120" width="8"   height="14" fill="#5369A8"/><text x="168" y="131" fill="#526078">440</text>
+          </g>
+        </svg>
+        <p class="note" style="padding:6px 0 0">NO_SERIAL and UNKNOWN_PART are almost entirely the furnace, which has neither.</p>
+      </div>
+    </div>
+
+    <div class="panel span3"><div class="panel-b"><div class="stat">
+      <div class="v v-green">0</div><div class="l">Journal backlog awaiting replay</div></div></div></div>
+    <div class="panel span3"><div class="panel-b"><div class="stat">
+      <div class="v v-green">v12 = v12</div><div class="l">Model version · edge matches site</div></div></div></div>
+  </div>
+  <p class="note">Build this dashboard first. It is the evidence for the low-latency and no-data-loss criteria, and it stays on screen throughout the demo.</p>
+</section>
+
+<script>
+const NAMES = {d1:'Find a part', d2:'Track a value', d3:'System health'};
+function show(id){
+  ['d1','d2','d3'].forEach(k=>document.getElementById(k).classList.toggle('hidden', k!==id));
+  document.querySelectorAll('.tabs button').forEach((b,i)=>
+    b.setAttribute('aria-current', ['d1','d2','d3'][i]===id ? 'page' : 'false'));
+  document.getElementById('dashName').textContent = NAMES[id];
+}
+</script>
+</body>
+</html>

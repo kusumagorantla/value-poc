@@ -1,0 +1,18 @@
+# GCP App Engine Deployment Configuration for Valeo MOM (.NET 8 Web API)
+runtime: custom
+env: flex
+
+# Serverless VPC Access Connector for Private Service Access (PSA) to GCP AlloyDB
+vpc_access_connector:
+  name: projects/valeo-mom-gcp/locations/europe-west1/connectors/valeo-vpc-connector
+
+env_variables:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ConnectionStrings__SiteConnection: "Host=10.0.0.5;Port=5432;Database=jarvis_site_db;Username=postgres;Password=YOUR_ALLOYDB_PASSWORD"
+  ConnectionStrings__EdgeConnection: "Host=10.0.0.5;Port=5432;Database=jarvis_edge_db;Username=postgres;Password=YOUR_ALLOYDB_PASSWORD"
+
+automatic_scaling:
+  min_num_instances: 1
+  max_num_instances: 10
+  cpu_utilization:
+    target_utilization: 0.70

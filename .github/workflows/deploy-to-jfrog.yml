@@ -1,0 +1,287 @@
+name: Build and Push to JFrog Artifactory
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  JFROG_URL: https://valeodemo.jfrog.io
+  DOCKER_REGISTRY: valeodemo.jfrog.io
+  DOCKER_REPO: docker-local
+  ARTIFACT_REPO: generic-local
+  API_IMAGE_NAME: jarvis-api
+  UI_IMAGE_NAME: jarvis-ui
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Generate version tags
+        id: version
+        run: |
+          BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed 's/\//-/g')
+          SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          VERSION="${BRANCH_NAME}-${SHORT_SHA}-${TIMESTAMP}"
+          
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "branch=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "timestamp=${TIMESTAMP}" >> $GITHUB_OUTPUT
+
+      # ============================================
+      # ENSURE REPOSITORIES EXIST
+      # ============================================
+      - name: Ensure Docker repository exists
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -u "${{ secrets.JFROG_USER }}:${{ secrets.JFROG_PASSWORD }}" \
+            "https://valeodemo.jfrog.io/artifactory/api/repositories/${{ env.DOCKER_REPO }}")
+          
+          if [ "$HTTP_CODE" = "404" ]; then
+            echo "Creating docker-local repository..."
+            curl -X PUT \
+              "https://valeodemo.jfrog.io/artifactory/api/repositories/${{ env.DOCKER_REPO }}" \
+              -u "${{ secrets.JFROG_USER }}:${{ secrets.JFROG_PASSWORD }}" \
+              -H "Content-Type: application/json" \
+              -d '{"key": "docker-local", "rclass": "local", "packageType": "docker", "dockerApiVersion": "V2"}'
+            echo "✅ Docker repository created"
+          else
+            echo "✅ Docker repository exists"
+          fi
+
+      - name: Ensure Generic repository exists
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -u "${{ secrets.JFROG_USER }}:${{ secrets.JFROG_PASSWORD }}" \
+            "https://valeodemo.jfrog.io/artifactory/api/repositories/${{ env.ARTIFACT_REPO }}")
+          
+          if [ "$HTTP_CODE" = "404" ]; then
+            echo "Creating generic-local repository..."
+            curl -X PUT \
+              "https://valeodemo.jfrog.io/artifactory/api/repositories/${{ env.ARTIFACT_REPO }}" \
+              -u "${{ secrets.JFROG_USER }}:${{ secrets.JFROG_PASSWORD }}" \
+              -H "Content-Type: application/json" \
+              -d '{"key": "generic-local", "rclass": "local", "packageType": "generic"}'
+            echo "✅ Generic repository created"
+          else
+            echo "✅ Generic repository exists"
+          fi
+
+      # ============================================
+      # DOCKER LOGIN
+      # ============================================
+      - name: Docker Login to JFrog
+        uses: docker/login-action@v3
+        with:
+          registry: valeodemo.jfrog.io
+          username: ${{ secrets.JFROG_USER }}
+          password: ${{ secrets.JFROG_PASSWORD }}
+
+      # ============================================
+      # BUILD JARVIS API IMAGE
+      # ============================================
+      - name: Build jarvis-api image
+        run: |
+          docker build \
+            -f ./src/Jarvis.Traceability.Api/Dockerfile \
+            -t valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.version }} \
+            -t valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:latest \
+            -t valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.branch }} \
+            ./src/Jarvis.Traceability.Api
+
+      - name: Push jarvis-api image to JFrog
+        run: |
+          docker push valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.version }}
+          docker push valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:latest
+          docker push valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.branch }}
+
+      # ============================================
+      # BUILD JARVIS UI IMAGE
+      # ============================================
+      - name: Build jarvis-ui image
+        run: |
+          docker build \
+            -f ./frontend/Dockerfile \
+            -t valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.version }} \
+            -t valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:latest \
+            -t valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.branch }} \
+            ./frontend
+
+      - name: Push jarvis-ui image to JFrog
+        run: |
+          docker push valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.version }}
+          docker push valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:latest
+          docker push valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.branch }}
+
+      # ============================================
+      # CREATE AND UPLOAD ARTIFACTS
+      # ============================================
+      - name: Create build artifacts
+        run: |
+          mkdir -p artifacts
+          cp docker-compose.yml artifacts/
+          
+          mkdir -p artifacts/dockerfiles
+          cp ./src/Jarvis.Traceability.Api/Dockerfile artifacts/dockerfiles/jarvis-api.Dockerfile
+          cp ./frontend/Dockerfile artifacts/dockerfiles/jarvis-ui.Dockerfile
+          
+          if [ -d "./grafana" ]; then
+            cp -r ./grafana artifacts/grafana-configs
+          fi
+          
+          cat > artifacts/build-info.json << EOF
+          {
+            "version": "${{ steps.version.outputs.version }}",
+            "branch": "${{ steps.version.outputs.branch }}",
+            "commit": "${{ github.sha }}",
+            "short_sha": "${{ steps.version.outputs.short_sha }}",
+            "timestamp": "${{ steps.version.outputs.timestamp }}",
+            "build_number": "${{ github.run_number }}",
+            "actor": "${{ github.actor }}",
+            "images": {
+              "jarvis-api": "valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.version }}",
+              "jarvis-ui": "valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.version }}"
+            }
+          }
+          EOF
+          
+          cat > artifacts/docker-compose-jfrog.yml << EOF
+          version: '3.8'
+          services:
+            jarvis-db:
+              image: postgres:17-alpine
+              container_name: jarvis-postgres
+              environment:
+                POSTGRES_DB: jarvis_traceability
+                POSTGRES_USER: jarvis_user
+                POSTGRES_PASSWORD: jarvis_password
+              ports:
+                - "5432:5432"
+              volumes:
+                - pgdata:/var/lib/postgresql/data
+            jarvis-api:
+              image: valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.version }}
+              container_name: jarvis-backend-api
+              ports:
+                - "5000:8080"
+              environment:
+                - ConnectionStrings__DefaultConnection=Host=jarvis-db;Database=jarvis_traceability;Username=jarvis_user;Password=jarvis_password
+              depends_on:
+                - jarvis-db
+            jarvis-ui:
+              image: valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.version }}
+              container_name: jarvis-react-ui
+              ports:
+                - "80:80"
+              depends_on:
+                - jarvis-api
+            jarvis-grafana:
+              image: grafana/grafana:10.2.0
+              container_name: jarvis-grafana-reports
+              ports:
+                - "3000:3000"
+              volumes:
+                - ./grafana/provisioning:/etc/grafana/provisioning
+                - ./grafana/dashboards:/var/lib/grafana/dashboards
+              depends_on:
+                - jarvis-db
+          volumes:
+            pgdata:
+          EOF
+          
+          tar -czvf jarvis-deployment-${{ steps.version.outputs.version }}.tar.gz artifacts/
+
+      # ============================================
+      # UPLOAD ARTIFACTS USING CURL (No CLI needed)
+      # ============================================
+      - name: Upload deployment tarball to JFrog
+        run: |
+          curl -X PUT \
+            "https://valeodemo.jfrog.io/artifactory/${{ env.ARTIFACT_REPO }}/jarvis/deployments/${{ steps.version.outputs.version }}/jarvis-deployment-${{ steps.version.outputs.version }}.tar.gz" \
+            -u "${{ secrets.JFROG_USER }}:${{ secrets.JFROG_PASSWORD }}" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary "@jarvis-deployment-${{ steps.version.outputs.version }}.tar.gz"
+          echo "✅ Tarball uploaded"
+
+      - name: Upload docker-compose-jfrog.yml
+        run: |
+          curl -X PUT \
+            "https://valeodemo.jfrog.io/artifactory/${{ env.ARTIFACT_REPO }}/jarvis/configs/docker-compose-jfrog.yml" \
+            -u "${{ secrets.JFROG_USER }}:${{ secrets.JFROG_PASSWORD }}" \
+            -H "Content-Type: application/x-yaml" \
+            --data-binary "@artifacts/docker-compose-jfrog.yml"
+          echo "✅ docker-compose-jfrog.yml uploaded"
+
+      - name: Upload build-info.json
+        run: |
+          curl -X PUT \
+            "https://valeodemo.jfrog.io/artifactory/${{ env.ARTIFACT_REPO }}/jarvis/builds/${{ steps.version.outputs.version }}/build-info.json" \
+            -u "${{ secrets.JFROG_USER }}:${{ secrets.JFROG_PASSWORD }}" \
+            -H "Content-Type: application/json" \
+            --data-binary "@artifacts/build-info.json"
+          echo "✅ build-info.json uploaded"
+
+      - name: Upload original docker-compose.yml
+        run: |
+          curl -X PUT \
+            "https://valeodemo.jfrog.io/artifactory/${{ env.ARTIFACT_REPO }}/jarvis/configs/docker-compose.yml" \
+            -u "${{ secrets.JFROG_USER }}:${{ secrets.JFROG_PASSWORD }}" \
+            -H "Content-Type: application/x-yaml" \
+            --data-binary "@artifacts/docker-compose.yml"
+          echo "✅ docker-compose.yml uploaded"
+
+      - name: Upload Dockerfiles
+        run: |
+          curl -X PUT \
+            "https://valeodemo.jfrog.io/artifactory/${{ env.ARTIFACT_REPO }}/jarvis/dockerfiles/jarvis-api.Dockerfile" \
+            -u "${{ secrets.JFROG_USER }}:${{ secrets.JFROG_PASSWORD }}" \
+            --data-binary "@artifacts/dockerfiles/jarvis-api.Dockerfile"
+          
+          curl -X PUT \
+            "https://valeodemo.jfrog.io/artifactory/${{ env.ARTIFACT_REPO }}/jarvis/dockerfiles/jarvis-ui.Dockerfile" \
+            -u "${{ secrets.JFROG_USER }}:${{ secrets.JFROG_PASSWORD }}" \
+            --data-binary "@artifacts/dockerfiles/jarvis-ui.Dockerfile"
+          echo "✅ Dockerfiles uploaded"
+
+      # ============================================
+      # SUMMARY
+      # ============================================
+      - name: Print Summary
+        run: |
+          echo "============================================"
+          echo "✅ DEPLOYMENT SUCCESSFUL"
+          echo "============================================"
+          echo ""
+          echo "Version: ${{ steps.version.outputs.version }}"
+          echo "Branch: ${{ steps.version.outputs.branch }}"
+          echo "Commit: ${{ github.sha }}"
+          echo ""
+          echo "🐳 Docker Images Pushed:"
+          echo "   - valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.version }}"
+          echo "   - valeodemo.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.version }}"
+          echo ""
+          echo "📁 Artifacts Uploaded:"
+          echo "   - ${{ env.ARTIFACT_REPO }}/jarvis/deployments/${{ steps.version.outputs.version }}/"
+          echo "   - ${{ env.ARTIFACT_REPO }}/jarvis/configs/docker-compose-jfrog.yml"
+          echo "   - ${{ env.ARTIFACT_REPO }}/jarvis/builds/${{ steps.version.outputs.version }}/build-info.json"
+          echo "   - ${{ env.ARTIFACT_REPO }}/jarvis/dockerfiles/"
+          echo ""
+          echo "============================================"
+
+      - name: Upload to GitHub Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-deployment-${{ steps.version.outputs.version }}
+          path: artifacts/
+          retention-days: 30

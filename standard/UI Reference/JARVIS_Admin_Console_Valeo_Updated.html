@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JARVIS Admin Console — UI mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F4F5; --surface:#FFFFFF; --surface-2:#FAFBFB;
+  --ink:#141C24; --ink-2:#5B6875; --ink-3:#8A96A2;
+  --rule:#DBE1E6; --rule-2:#EDF1F3;
+  --accent:#2D3E7B; --accent-2:#3E51A0; --accent-tint:#EEF0F8;
+  --ok:#17796A; --ok-tint:#E4F2EF;
+  --warn:#B4791A; --warn-tint:#FAF0DC;
+  --bad:#B03A2E; --bad-tint:#FBEAE7;
+  --degraded:#6B5CA5; --degraded-tint:#EFEDF7;
+  --rail:220px; --head:54px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  background:var(--bg); color:var(--ink);
+  font-size:13.5px; line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+
+/* ---------- shell ---------- */
+.app{display:grid;grid-template-columns:var(--rail) 1fr;min-height:100vh}
+.rail{
+  background:var(--accent); color:#fff; padding:0 0 20px;
+  display:flex;flex-direction:column;position:sticky;top:0;height:100vh;
+}
+.brand{padding:16px 18px 14px;border-bottom:1px solid rgba(255,255,255,.16)}
+.brand b{display:block;font-size:14px;letter-spacing:.02em;font-weight:600}
+.brand span{display:block;font-size:11px;color:rgba(255,255,255,.62);margin-top:2px;
+  font-family:"IBM Plex Mono",monospace;letter-spacing:.04em}
+.nav{padding:12px 10px;display:flex;flex-direction:column;gap:2px}
+.nav button{
+  all:unset;display:flex;align-items:center;gap:10px;cursor:pointer;
+  padding:8px 11px;border-radius:5px;font-size:13px;color:rgba(255,255,255,.80);
+  font-family:inherit;
+}
+.nav button:hover{background:rgba(255,255,255,.09);color:#fff}
+.nav button[aria-current="page"]{background:rgba(255,255,255,.16);color:#fff;font-weight:600}
+.nav button:focus-visible{outline:2px solid #fff;outline-offset:1px}
+.nav .num{font-family:"IBM Plex Mono",monospace;font-size:11px;color:rgba(255,255,255,.45);width:12px}
+.nav button[aria-current="page"] .num{color:rgba(255,255,255,.8)}
+.railfoot{margin-top:auto;padding:0 18px;font-size:11px;color:rgba(255,255,255,.5);
+  font-family:"IBM Plex Mono",monospace;line-height:1.7}
+
+.main{display:flex;flex-direction:column;min-width:0}
+.head{
+  height:var(--head);background:var(--surface);border-bottom:1px solid var(--rule);
+  display:flex;align-items:center;gap:16px;padding:0 22px;position:sticky;top:0;z-index:5;
+}
+.head h1{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.head .crumb{color:var(--ink-3);font-weight:400}
+.spacer{margin-left:auto}
+.toggle{display:flex;border:1px solid var(--rule);border-radius:5px;overflow:hidden}
+.toggle button{
+  all:unset;cursor:pointer;padding:5px 13px;font-size:12px;font-weight:500;
+  font-family:"IBM Plex Mono",monospace;color:var(--ink-2);
+}
+.toggle button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.toggle button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.user{font-size:12px;color:var(--ink-2);font-family:"IBM Plex Mono",monospace}
+.content{padding:22px;flex:1}
+
+/* ---------- primitives ---------- */
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px}
+.card-h{padding:12px 16px;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:12px}
+.card-h h2{font-size:13px;font-weight:600;letter-spacing:.01em}
+.card-h .sub{font-size:12px;color:var(--ink-3)}
+.btn{
+  all:unset;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:500;
+  padding:6px 13px;border-radius:5px;border:1px solid var(--rule);color:var(--ink);background:var(--surface);
+}
+.btn:hover{background:var(--surface-2);border-color:var(--ink-3)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-2)}
+.field{
+  border:1px solid var(--rule);border-radius:5px;padding:5px 10px;font-size:12.5px;
+  font-family:"IBM Plex Mono",monospace;background:var(--surface);color:var(--ink);width:180px;
+}
+.field:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+
+table{width:100%;border-collapse:collapse}
+th{
+  text-align:left;font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink-3);padding:8px 14px;border-bottom:1px solid var(--rule);background:var(--surface-2);
+  white-space:nowrap;
+}
+td{padding:7px 14px;border-bottom:1px solid var(--rule-2);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--surface-2)}
+td.num,th.num{text-align:right;font-family:"IBM Plex Mono",monospace}
+.id{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--accent)}
+
+.pill{
+  display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;
+  padding:2px 7px;border-radius:3px;font-family:"IBM Plex Mono",monospace;white-space:nowrap;
+}
+.p-ok{background:var(--ok-tint);color:var(--ok)}
+.p-warn{background:var(--warn-tint);color:var(--warn)}
+.p-bad{background:var(--bad-tint);color:var(--bad)}
+.p-deg{background:var(--degraded-tint);color:var(--degraded)}
+.p-mute{background:var(--rule-2);color:var(--ink-2)}
+
+.banner{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:6px;
+  border:1px solid var(--warn);background:var(--warn-tint);color:#7A5210;font-size:12.5px;margin-bottom:16px;
+}
+.banner.conflict{border-color:var(--degraded);background:var(--degraded-tint);color:#4A3E7A;
+  align-items:flex-start;flex-direction:column;gap:8px}
+.banner .btn{background:transparent}
+
+/* ---------- signature: tolerance band ---------- */
+.band{display:block}
+.band-legend{display:flex;gap:14px;font-size:10.5px;color:var(--ink-3);
+  font-family:"IBM Plex Mono",monospace;margin-top:5px;flex-wrap:wrap}
+.band-legend i{font-style:normal;display:inline-flex;align-items:center;gap:4px}
+.swatch{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+/* ---------- screen 2 : three panes ---------- */
+.panes{display:grid;grid-template-columns:250px 240px 1fr;gap:14px;align-items:start}
+.pane-list{list-style:none}
+.pane-list li{border-bottom:1px solid var(--rule-2)}
+.pane-list li:last-child{border-bottom:0}
+.pane-list button{
+  all:unset;cursor:pointer;display:flex;gap:9px;align-items:baseline;width:100%;
+  padding:8px 14px;font-size:12.5px;font-family:inherit;box-sizing:border-box;
+}
+.pane-list button:hover{background:var(--surface-2)}
+.pane-list button[aria-current="true"]{background:var(--accent-tint);
+  box-shadow:inset 2px 0 0 var(--accent);font-weight:600}
+.pane-list button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.pane-list .ord{font-family:"IBM Plex Mono",monospace;color:var(--ink-3);font-size:11px;width:14px}
+.pane-list .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pane-list .ct{font-family:"IBM Plex Mono",monospace;color:var(--ink-3);font-size:11px}
+.grip{color:var(--ink-3);cursor:grab;font-size:11px}
+
+.rdef{padding:14px 16px;border-bottom:1px solid var(--rule-2)}
+.rdef:last-child{border-bottom:0}
+.rdef-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:9px}
+.rdef-top .nm{font-weight:600;font-size:13.5px}
+.limits{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:10px}
+.limits label{display:block;font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:600;margin-bottom:3px}
+.limits input{width:100%;border:1px solid var(--rule);border-radius:4px;padding:4px 7px;
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:var(--surface);color:var(--ink)}
+.limits input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.inline-err{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:12px;
+  color:var(--bad);background:var(--bad-tint);padding:6px 10px;border-radius:4px}
+
+/* ---------- screen 3 : matrix ---------- */
+.matrix td,.matrix th{text-align:center}
+.matrix td:first-child,.matrix th:first-child{text-align:left}
+.matrix th.rot{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:0;
+  text-transform:none;color:var(--ink-2)}
+.matrix input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
+.matrix tbody tr:hover{background:var(--accent-tint)}
+.stn{font-family:"IBM Plex Mono",monospace;font-weight:500}
+
+/* ---------- screen 4 : ingest log ---------- */
+.filters{display:flex;gap:6px;align-items:center}
+.chip{
+  all:unset;cursor:pointer;font-size:12px;padding:4px 11px;border-radius:20px;
+  border:1px solid var(--rule);color:var(--ink-2);font-family:inherit;
+}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.rowbtn{all:unset;cursor:pointer;display:block;width:100%}
+tr.expand td{background:#0F1620;padding:0;border-bottom:1px solid var(--rule)}
+pre{
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;line-height:1.65;color:#C7D3DE;
+  padding:14px 18px;overflow-x:auto;white-space:pre;
+}
+pre .k{color:#8FB8E8}
+pre .s{color:#9FD8A8}
+pre .n{color:#E8C48F}
+.caret{display:inline-block;width:10px;color:var(--ink-3);font-family:monospace}
+
+.hidden{display:none !important}
+.note{font-size:12px;color:var(--ink-3);margin-top:10px}
+.empty{padding:36px 16px;text-align:center;color:var(--ink-3);font-size:13px}
+
+@media (max-width:1100px){
+  .panes{grid-template-columns:1fr}
+  :root{--rail:60px}
+  .brand span,.nav button span.lbl,.railfoot{display:none}
+  .nav button{justify-content:center}
+}
+@media (prefers-reduced-motion:no-preference){
+  .content{animation:fade .18s ease-out}
+  @keyframes fade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+}
+
+/* ================================================================
+   VALEO MOM UI OVERRIDE — visual layer only
+   Content, text, DOM structure and interaction architecture unchanged.
+   ================================================================ */
+:root{
+  --bg:#F7F9FC;
+  --surface:#FFFFFF;
+  --surface-2:#F5F8FC;
+  --ink:#102348;
+  --ink-2:#46546C;
+  --ink-3:#7B8799;
+  --rule:#DDE4ED;
+  --rule-2:#ECF0F5;
+  --accent:#0B4FC4;
+  --accent-2:#083E9D;
+  --accent-tint:#EAF2FF;
+  --ok:#58B52A;
+  --ok-tint:#EEF8E9;
+  --warn:#F2B233;
+  --warn-tint:#FFF6DF;
+  --bad:#E53935;
+  --bad-tint:#FDECEC;
+  --degraded:#7557C8;
+  --degraded-tint:#F1EDFB;
+  --rail:208px;
+  --head:56px;
+}
+
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:13px;line-height:1.45}
+
+.app{grid-template-columns:var(--rail) 1fr;background:var(--bg)}
+.rail{
+  background:#fff;color:var(--ink);padding:0 0 18px;border-right:1px solid #E2E7EE;
+  box-shadow:1px 0 0 rgba(16,35,72,.02);z-index:8;
+}
+.brand{
+  height:76px;padding:14px 18px 12px;border-bottom:1px solid var(--rule-2);
+  display:flex;align-items:center;gap:10px;
+}
+.brand b{
+  font-size:0;line-height:1;font-weight:700;letter-spacing:-.04em;
+}
+.brand b:after{content:"JARVIS";font-size:25px;color:#67B82F;letter-spacing:-.06em;font-style:italic}
+.brand span{
+  margin-top:0;font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:20px;
+  color:#132343;letter-spacing:-.03em;font-weight:500;display:block;
+}
+.nav{padding:14px 0;gap:2px}
+.nav:before{
+  content:"OVERVIEW";display:block;padding:0 18px 8px;color:#66738A;font-size:10px;
+  font-weight:600;letter-spacing:.05em;
+}
+.nav button{
+  padding:10px 18px;border-radius:0;gap:11px;font-size:13px;color:#142445;
+  border-left:3px solid transparent;transition:none;
+}
+.nav button:hover{background:#F6F8FB;color:var(--ink)}
+.nav button[aria-current="page"]{
+  background:#EAF2FF;color:var(--accent);font-weight:600;border-left-color:var(--accent);
+  box-shadow:none;
+}
+.nav .num{font-family:"IBM Plex Sans",sans-serif;font-size:0;width:13px;color:#64728A}
+.nav .num:before{content:"•";font-size:17px;line-height:1;color:#8190A6}
+.nav button[aria-current="page"] .num:before{color:var(--accent)}
+.railfoot{
+  padding:0 18px;color:#7B8799;font-family:"IBM Plex Sans",sans-serif;font-size:10.5px;
+  border-top:1px solid var(--rule-2);padding-top:14px;
+}
+
+.main{background:var(--bg)}
+.head{
+  height:var(--head);background:#fff;border-bottom:1px solid var(--rule);padding:0 20px;
+  gap:13px;box-shadow:0 1px 4px rgba(16,35,72,.025)
+}
+.head h1{font-size:15px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:#132343}
+.head .crumb{color:#6C7890;font-size:12px}
+.toggle{border:1px solid #CBD4E1;border-radius:4px}
+.toggle button{padding:5px 12px;font-size:10.5px;font-family:"IBM Plex Sans",sans-serif;font-weight:700;letter-spacing:.06em}
+.toggle button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.user{font-family:"IBM Plex Sans",sans-serif;font-size:12px;color:#34435D;font-weight:600}
+.content{padding:18px 20px 24px;max-width:none}
+
+.card{background:#fff;border:1px solid #DCE3EC;border-radius:4px;box-shadow:0 1px 2px rgba(16,35,72,.025)}
+.card-h{padding:12px 16px;border-bottom:1px solid var(--rule);min-height:48px}
+.card-h h2{font-size:13px;font-weight:700;letter-spacing:.01em;color:#142445}
+.card-h .sub{font-size:11.5px;color:#7B8799}
+.btn{
+  font-size:11.5px;font-weight:600;padding:7px 13px;border-radius:4px;border:1px solid #C8D2DF;
+  color:#19325D;background:#fff;box-shadow:none;
+}
+.btn:hover{background:#F7F9FC;border-color:#AEBBCD}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:none}
+.btn.primary:hover{background:var(--accent-2)}
+.field{
+  border:1px solid #CBD5E2;border-radius:4px;padding:7px 10px;font-size:11.5px;
+  font-family:"IBM Plex Sans",sans-serif;background:#fff;color:var(--ink);width:180px;height:32px;
+}
+.field:focus{outline:2px solid #BFD5F8;outline-offset:-1px;border-color:var(--accent)}
+
+table{width:100%}
+th{
+  font-size:10px;font-weight:700;letter-spacing:.06em;color:#68758A;padding:9px 14px;
+  border-bottom:1px solid #DCE3EC;background:#F7F9FC;
+}
+td{padding:9px 14px;border-bottom:1px solid #EDF1F5}
+tbody tr:hover{background:#F8FAFD}
+.id{font-family:"IBM Plex Sans",sans-serif;font-size:12px;color:var(--accent);font-weight:600}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+.pill{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;font-family:"IBM Plex Sans",sans-serif;letter-spacing:.02em}
+.p-ok{background:var(--ok-tint);color:#3C8B1D}
+.p-warn{background:var(--warn-tint);color:#A56E05}
+.p-bad{background:var(--bad-tint);color:#C72E2A}
+.p-deg{background:var(--degraded-tint);color:#6549B0}
+.p-mute{background:#EEF1F5;color:#647188}
+
+.banner{
+  padding:10px 14px;border-radius:4px;border:1px solid #F0CF83;background:#FFF9E9;
+  color:#79550B;font-size:12px;margin-bottom:14px;box-shadow:none;
+}
+.banner.conflict{border-color:#CFC5ED;background:#F6F3FD;color:#4E3D84}
+.banner .btn{background:transparent}
+
+.panes{grid-template-columns:260px 250px 1fr;gap:12px}
+.pane-list li{border-bottom:1px solid #EEF1F5}
+.pane-list button{padding:9px 13px;font-size:12px}
+.pane-list button:hover{background:#F7F9FC}
+.pane-list button[aria-current="true"]{background:#EAF2FF;box-shadow:inset 3px 0 0 var(--accent);font-weight:600}
+.pane-list .ord{color:#8793A6}
+.pane-list .ct{color:#7B8799}
+.grip{color:#9AA5B5}
+.rdef{padding:14px 16px;border-bottom:1px solid #EEF1F5}
+.rdef-top .nm{font-weight:700;font-size:13px}
+.limits{gap:7px}
+.limits label{font-size:9.5px;color:#77849A}
+.limits input{border:1px solid #CBD5E2;border-radius:4px;padding:6px 7px;font-family:"IBM Plex Sans",sans-serif;font-size:12px}
+.inline-err{background:#FDECEC;color:#B72D29;border-radius:4px}
+.note{font-size:11.5px;color:#7B8799}
+.empty{padding:36px 16px;color:#7B8799}
+
+.matrix input{accent-color:var(--accent)}
+.matrix tbody tr:hover{background:#EAF2FF}
+.stn{font-family:"IBM Plex Sans",sans-serif;font-weight:600;color:#29446E}
+
+.filters{gap:5px}
+.chip{font-size:11.5px;padding:5px 12px;border-radius:16px;border:1px solid #CBD5E2;color:#5E6B80}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+pre{font-family:"IBM Plex Mono",monospace;font-size:11px;line-height:1.65;color:#C7D3DE;background:#101A2A}
+
+@media (max-width:1100px){
+  .panes{grid-template-columns:1fr}
+  :root{--rail:64px}
+  .brand span,.nav button span.lbl,.railfoot{display:none}
+  .brand b:after{font-size:18px}
+  .nav:before{display:none}
+  .nav button{justify-content:center;padding:10px 8px}
+}
+
+</style>
+<style id="valeo-ux-v2">
+/* ================================================================
+   VALEO MOM UX V2 — SPACIOUS ENTERPRISE / OT LAYOUT
+   Visual-only/layout overrides. Existing text, data and JS retained.
+   ================================================================ */
+:root{
+  --bg:#F7F9FB;
+  --surface:#FFFFFF;
+  --surface-2:#F4F7FA;
+  --ink:#13233F;
+  --ink-2:#52627A;
+  --ink-3:#7D899A;
+  --rule:#DCE3EB;
+  --rule-2:#EAF0F5;
+  --accent:#0057D9;
+  --accent-2:#0047B3;
+  --accent-tint:#EAF2FF;
+  --ok:#35A936;
+  --ok-tint:#EAF7E8;
+  --warn:#8A6A2F;
+  --warn-tint:#F3EFE6;
+  --bad:#D92D20;
+  --bad-tint:#FDECEA;
+  --degraded:#4B64A8;
+  --degraded-tint:#EEF2FF;
+  --rail:216px;
+  --head:64px;
+}
+
+html{background:var(--bg)}
+body{background:var(--bg);font-size:13px;line-height:1.45;color:var(--ink)}
+
+/* Shell: lighter rail + calmer header */
+.app{grid-template-columns:var(--rail) minmax(0,1fr);min-height:100vh}
+.rail{
+  background:#fff;color:var(--ink);border-right:1px solid var(--rule);
+  padding:0 0 18px;box-shadow:none;z-index:10;
+}
+.brand{height:64px;padding:0 22px;display:flex;align-items:center;border-bottom:1px solid var(--rule)}
+.brand b{font-size:15px;color:var(--ink);letter-spacing:.02em}
+.brand span{font-size:10px;color:var(--ink-3);margin:2px 0 0 8px;font-family:inherit;letter-spacing:.02em}
+.nav{padding:18px 10px;gap:4px}
+.nav button{
+  min-height:38px;padding:9px 12px;border-radius:7px;color:var(--ink-2);gap:10px;font-size:13px;
+}
+.nav button:hover{background:#F4F7FA;color:var(--ink)}
+.nav button[aria-current="page"]{
+  background:var(--accent-tint);color:var(--accent);font-weight:600;
+  box-shadow:inset 3px 0 0 var(--accent);
+}
+.nav .num{color:var(--ink-3)}
+.nav button[aria-current="page"] .num{color:var(--accent)}
+.railfoot{padding:0 22px;color:var(--ink-3);font-family:inherit}
+
+.main{min-width:0;background:var(--bg)}
+.head{
+  height:var(--head);padding:0 28px;background:#fff;border-bottom:1px solid var(--rule);
+  box-shadow:0 1px 2px rgba(19,35,63,.03);gap:18px;
+}
+.head h1{font-size:15px;color:var(--ink);font-weight:650}
+.head .crumb{color:var(--ink-3)}
+.toggle{border-color:var(--rule);border-radius:7px;background:#fff}
+.toggle button{padding:6px 12px;color:var(--ink-2)}
+.toggle button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.user{color:var(--ink-2);font-family:inherit}
+
+/* Page canvas */
+.content{padding:26px 30px 32px;max-width:1680px;width:100%;margin:0 auto}
+
+/* Global cards */
+.card{border:1px solid var(--rule);border-radius:9px;box-shadow:0 1px 2px rgba(19,35,63,.025);overflow:hidden}
+.card-h{min-height:54px;padding:14px 18px;border-bottom:1px solid var(--rule-2);gap:10px;background:#fff}
+.card-h h2{font-size:13px;color:var(--ink);font-weight:650}
+.card-h .sub{color:var(--ink-3)}
+
+.btn{
+  min-height:34px;padding:7px 13px;border-radius:7px;border-color:#CBD5E1;
+  color:var(--ink);background:#fff;font-size:12.5px;transition:background .15s,border-color .15s,box-shadow .15s;
+}
+.btn:hover{background:#F5F8FC;border-color:#AEBBCB}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 1px 2px rgba(0,87,217,.15)}
+.btn.primary:hover{background:var(--accent-2)}
+.field{height:36px;border-radius:7px;border-color:#CBD5E1;padding:7px 11px;background:#fff;font-family:inherit}
+.field:focus{outline:2px solid rgba(0,87,217,.18);border-color:var(--accent)}
+
+/* Tables: more breathing room */
+table{table-layout:auto}
+th{padding:10px 16px;background:#F8FAFC;color:#718096;font-size:10px;border-bottom:1px solid var(--rule);letter-spacing:.06em}
+td{padding:10px 16px;border-bottom:1px solid var(--rule-2);height:44px}
+tbody tr:hover{background:#F7FAFF}
+.id{color:var(--accent)}
+.pill{padding:3px 8px;border-radius:999px;font-family:inherit;font-size:10.5px;letter-spacing:.01em}
+.p-ok{background:var(--ok-tint);color:#258C2B}
+.p-warn{background:var(--warn-tint);color:#765A27}
+.p-bad{background:var(--bad-tint);color:#B42318}
+.p-deg{background:var(--degraded-tint);color:#405796}
+.p-mute{background:#EEF2F6;color:#5F6F84}
+
+/* Alert/advisory: teal instead of yellow */
+.banner{padding:12px 15px;border-radius:8px;border:1px solid #C9D0D8;background:var(--warn-tint);color:#46515F;margin-bottom:18px}
+.banner.conflict{border-color:#B6C2E6;background:var(--degraded-tint);color:#344A86}
+
+/* Screen 1 — flows: create clear vertical hierarchy */
+.content > .card:has(table){margin-top:2px}
+.content > .card > .card-h{padding:16px 18px}
+.content > .card > .card-h .field{margin-left:auto}
+
+/* Screen 2 — editor becomes 2-column workbench:
+   left = persistent process-step navigation;
+   right = operations + value definitions stacked vertically. */
+.panes{
+  display:grid;
+  grid-template-columns:260px minmax(0,1fr);
+  grid-template-rows:auto auto;
+  gap:16px;
+  align-items:start;
+}
+.panes > .card:nth-child(1){grid-column:1;grid-row:1 / span 2;position:sticky;top:80px}
+.panes > .card:nth-child(2){grid-column:2;grid-row:1;min-width:0}
+.panes > .card:nth-child(3){grid-column:2;grid-row:2;min-width:0}
+
+.pane-list li{border-bottom:1px solid var(--rule-2)}
+.pane-list button{min-height:48px;padding:9px 14px;gap:9px}
+.pane-list button:hover{background:#F7FAFF}
+.pane-list button[aria-current="true"]{background:var(--accent-tint);box-shadow:inset 3px 0 0 var(--accent);font-weight:600}
+.pane-list .ord{color:var(--ink-3)}
+.grip{color:#9AA7B8}
+
+/* Process steps: easier scanning */
+.panes > .card:nth-child(1) .card-h{position:sticky;top:0;z-index:2}
+.panes > .card:nth-child(1) .pane-list .nm{line-height:1.3}
+
+/* Operations: use a compact data table feel */
+.panes > .card:nth-child(2) .pane-list button{min-height:52px}
+.panes > .card:nth-child(2) .pane-list .nm{display:flex;gap:10px;align-items:center}
+
+/* Value definitions: more space per definition */
+.rdef{padding:18px 20px;border-bottom:1px solid var(--rule-2)}
+.rdef-top{gap:8px;margin-bottom:13px}
+.rdef-top .nm{font-size:14px;color:var(--ink)}
+.limits{grid-template-columns:repeat(5,minmax(80px,1fr));gap:10px;margin-top:14px}
+.limits label{font-size:9.5px;color:#738197}
+.limits input{height:34px;padding:6px 9px;border-radius:6px;font-family:inherit;border-color:#CBD5E1}
+.inline-err{margin-top:12px;padding:8px 10px;border-radius:6px;color:#B42318;background:var(--bad-tint)}
+.note{color:var(--ink-3)}
+
+/* Tolerance band — quieter visual footprint */
+.band-legend{gap:12px;color:var(--ink-3);font-family:inherit}
+
+/* Screen 3 matrix */
+.matrix th,.matrix td{padding:12px 14px}
+.matrix tbody tr:hover{background:var(--accent-tint)}
+.matrix input{width:16px;height:16px;accent-color:var(--accent)}
+
+/* Screen 4 log */
+.filters{gap:7px}
+.chip{padding:6px 12px;border-radius:999px;border-color:#CBD5E1}
+.chip[aria-pressed="true"]{background:var(--accent-tint);border-color:#A9C8FF;color:var(--accent)}
+tr.expand td{background:#16263D}
+pre{padding:18px 20px}
+
+/* Better action grouping and spacing */
+.content .card-h > .spacer{min-width:10px}
+.content .card-h > .btn + .btn{margin-left:2px}
+
+/* Keep the editor usable at laptop widths */
+@media (max-width:1280px){
+  .content{padding:22px 22px 28px}
+  .panes{grid-template-columns:235px minmax(0,1fr);gap:14px}
+  .limits{grid-template-columns:repeat(5,minmax(65px,1fr))}
+}
+@media (max-width:980px){
+  :root{--rail:64px}
+  .brand{padding:0 16px;justify-content:center}
+  .brand span,.nav button span.lbl,.railfoot{display:none}
+  .nav button{justify-content:center}
+  .head{padding:0 18px}
+  .content{padding:18px}
+  .panes{grid-template-columns:1fr}
+  .panes > .card:nth-child(1),.panes > .card:nth-child(2),.panes > .card:nth-child(3){grid-column:1;grid-row:auto;position:static}
+}
+</style>
+<style id="jarvis-final-ux">
+:root{--bg:#F6F7F9;--surface:#fff;--surface-2:#F8F9FB;--ink:#15233B;--ink-2:#526078;--ink-3:#7B8799;--rule:#D9DEE6;--rule-2:#E9EDF2;--accent:#0057D9;--accent-2:#0047B3;--accent-tint:#EEF3F9;--ok:#35A936;--ok-tint:#ECF7E9;--warn:#8A6A2F;--warn-tint:#F3EFE6;--bad:#D92D20;--bad-tint:#FDEDEC;--degraded:#5369A8;--degraded-tint:#EEF1F8;--highlight:#DDE2E8;--highlight-border:#AEB6C2;--rail:216px;--head:64px}
+.brand{height:96px;padding:17px 20px 15px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;border-bottom:1px solid var(--rule)}
+.brand b,.brand b:after{font-size:0!important;line-height:1!important}.brand b:after{content:"JARVIS";display:block;font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:25px!important;font-weight:700;font-style:italic;letter-spacing:-.055em;color:#5EAD2B}.brand span{display:block;margin:0;padding:0;font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.015em;color:#5C687A}
+.nav{padding:16px 10px;gap:3px}.nav button{min-height:40px;padding:9px 12px;border-radius:6px;color:var(--ink-2);gap:10px}.nav button:hover{background:#F3F5F7;color:var(--ink)}.nav button[aria-current="page"]{background:#E2E6EB;color:var(--ink);font-weight:700;box-shadow:inset 3px 0 0 #69727E}.nav button[aria-current="page"] .num:before{color:#4E5865}
+.head{height:var(--head);padding:0 28px;gap:16px;background:#fff;border-bottom:1px solid var(--rule);box-shadow:0 1px 2px rgba(21,35,59,.025)}.head h1{flex:0 0 auto;font-size:15px;line-height:20px;font-weight:700;color:var(--ink);letter-spacing:.01em;text-transform:uppercase}.head .crumb{font-size:12px;line-height:18px;color:var(--ink-3)}.head .spacer{margin-left:auto}.toggle,.user{flex:0 0 auto}.user{white-space:nowrap}
+.content{padding:24px 30px 30px;max-width:1680px;width:100%;margin:0 auto}.card{border:1px solid var(--rule);border-radius:8px;box-shadow:0 1px 2px rgba(21,35,59,.025);overflow:hidden}.card-h{min-height:56px;padding:13px 18px;gap:10px;align-items:center}.card-h h2{font-size:13px;line-height:19px;font-weight:700;color:var(--ink)}.card-h .sub{font-size:11.5px;line-height:17px;color:var(--ink-3)}
+.btn{min-height:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;padding:0 14px;border-radius:6px;border:1px solid #C7CFDA;font-size:12px;line-height:16px;font-weight:600;color:var(--ink);background:#fff;vertical-align:middle}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn:hover{background:#F4F6F8;border-color:#AEB8C5}.btn.primary:hover{background:var(--accent-2);border-color:var(--accent-2)}.btn:focus-visible{outline:2px solid rgba(0,87,217,.28);outline-offset:2px}
+.content > .card > .card-h{display:flex;flex-wrap:wrap;row-gap:10px}.content > .card > .card-h > .field{margin-left:auto}.content > .card > .card-h > .btn{flex:0 0 auto}.field{width:250px;height:36px;padding:0 11px;border-radius:6px;font-size:12px;line-height:18px}
+th{padding:10px 16px;height:38px;background:#F7F8FA;color:#6F7B8D;font-size:10px;line-height:14px}td{padding:10px 16px;height:46px;line-height:18px;border-bottom:1px solid var(--rule-2)}tbody tr:hover{background:#F8F9FA}
+.pane-list button[aria-current="true"],tbody tr[aria-selected="true"],tbody tr.selected,.matrix tbody tr[aria-selected="true"]{background:var(--highlight)!important;color:var(--ink);box-shadow:inset 3px 0 0 var(--highlight-border)}.pane-list button[aria-current="true"] .id,tbody tr[aria-selected="true"] .id,tbody tr.selected .id{color:#25364D}
+.panes{display:grid;grid-template-columns:270px minmax(0,1fr);grid-template-rows:auto auto;gap:16px;align-items:start}.panes>.card:nth-child(1){grid-column:1;grid-row:1 / span 2;position:sticky;top:80px;min-width:0}.panes>.card:nth-child(2){grid-column:2;grid-row:1;min-width:0}.panes>.card:nth-child(3){grid-column:2;grid-row:2;min-width:0}.panes>.card:nth-child(1) .card-h,.panes>.card:nth-child(2) .card-h,.panes>.card:nth-child(3) .card-h{display:flex;flex-wrap:wrap;align-items:center}.pane-list button{min-height:50px;padding:9px 14px;gap:9px;align-items:center}.pane-list button[aria-current="true"]{background:var(--highlight);box-shadow:inset 3px 0 0 var(--highlight-border);color:var(--ink)}.pane-list .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:17px}.pane-list .ct{margin-left:auto;flex:0 0 auto}.panes>.card:nth-child(3) .card-h .spacer{margin-left:auto;min-width:14px}.panes>.card:nth-child(3) .card-h .btn{flex:0 0 auto}
+.rdef{padding:18px 20px}.rdef-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}.rdef-top .nm{font-size:14px;line-height:19px}.limits{grid-template-columns:repeat(5,minmax(90px,1fr));gap:10px}.limits input{height:34px;padding:0 9px;border-radius:6px}.inline-err{line-height:18px}.note{line-height:17px}
+@media (max-width:1280px){.content{padding:20px 22px 28px}.panes{grid-template-columns:240px minmax(0,1fr);gap:14px}.limits{grid-template-columns:repeat(5,minmax(70px,1fr))}}
+@media (max-width:1080px){.content>.card>.card-h>.field{margin-left:0;flex:1 1 220px}.panes{grid-template-columns:1fr}.panes>.card:nth-child(1),.panes>.card:nth-child(2),.panes>.card:nth-child(3){grid-column:1;grid-row:auto;position:static}.panes>.card:nth-child(1) .card-h{position:static}}
+@media (max-width:760px){.content{padding:16px}.head{padding:0 16px}.head .crumb{display:none}.brand{height:82px;padding:13px 16px}.brand b:after{font-size:22px!important}.card-h{padding:12px 14px}.content>.card>.card-h>.field{width:100%;flex-basis:100%}.btn{min-height:36px;height:36px}.limits{grid-template-columns:1fr 1fr}}
+</style>
+
+<style id="valeo-final-adjustments">
+/* ================================================================
+   VALEO FINAL ADJUSTMENTS
+   Advisory = neutral grey from supplied reference image.
+   Navigation emphasis = Valeo Technical Blue.
+   Editor actions are aligned with their section headers.
+   ================================================================ */
+:root{
+  --advisory:#E8EBF0;
+  --advisory-border:#C9D0D8;
+  --advisory-ink:#46515F;
+  --technical-blue:#0057D9;
+  --technical-blue-tint:#EAF2FF;
+  --warn:#8A6A2F;
+  --warn-tint:#F3EFE6;
+}
+
+/* Advisory / non-blocking information: neutral grey, not cyan/teal. */
+.banner{
+  border-color:var(--advisory-border);
+  background:var(--advisory);
+  color:var(--advisory-ink);
+}
+.banner .btn{
+  border-color:#B8C0CA;
+  background:#F7F8FA;
+  color:#263548;
+}
+.banner .btn:hover{
+  background:#fff;
+  border-color:#9DA7B3;
+}
+.banner.conflict{
+  border-color:#B9C3CF;
+  background:#EEF1F4;
+  color:#3F4D5D;
+}
+
+/* Remove the remaining teal treatment from the warning/status pill.
+   Warning remains distinguishable without using cyan/teal. */
+.p-warn{
+  background:#F2EEE7;
+  color:#7A5A21;
+}
+
+/* Technical Blue is reserved for navigation focus/selection. */
+.nav button[aria-current="page"]{
+  background:var(--technical-blue-tint);
+  color:var(--technical-blue);
+  font-weight:700;
+  box-shadow:inset 3px 0 0 var(--technical-blue);
+}
+.nav button[aria-current="page"] .num:before{
+  color:var(--technical-blue);
+}
+.nav button:focus-visible{
+  outline:2px solid var(--technical-blue);
+  outline-offset:-2px;
+}
+
+/* Editor card headers: title/subtitle stay together; action sits on the
+   same baseline at the far right, with no overlap. */
+.editor-pane-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:nowrap !important;
+}
+.editor-pane-header .card-title-group{
+  min-width:0;
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  flex:1 1 auto;
+}
+.editor-pane-header .card-title-group h2{
+  flex:0 0 auto;
+}
+.editor-pane-header .card-title-group .sub{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.editor-pane-header > .btn{
+  flex:0 0 auto;
+  margin-left:auto;
+}
+
+/* Keep the Process Steps and Operations header actions visually identical. */
+.panes > .card:nth-child(1) .editor-pane-header,
+.panes > .card:nth-child(2) .editor-pane-header{
+  min-height:56px;
+  padding:11px 14px;
+}
+.panes > .card:nth-child(1) .editor-pane-header > .btn,
+.panes > .card:nth-child(2) .editor-pane-header > .btn{
+  min-height:32px;
+  height:32px;
+  padding:0 12px;
+}
+
+/* Do not let narrow desktop widths cause header/action collisions. */
+@media (max-width:760px){
+  .editor-pane-header{
+    flex-wrap:wrap !important;
+    row-gap:8px;
+  }
+  .editor-pane-header .card-title-group{
+    flex:1 1 100%;
+  }
+  .editor-pane-header > .btn{
+    margin-left:0;
+  }
+}
+</style>
+
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ left rail ============ -->
+  <aside class="rail">
+    <div class="brand">
+      <b>JARVIS</b>
+      <span>Process Traceability</span>
+    </div>
+    <nav class="nav" id="nav" aria-label="Screens"></nav>
+    <div class="railfoot">
+      role <span id="railRole">site</span><br>
+      model v12<br>
+      build 0.1.0-poc
+    </div>
+  </aside>
+
+  <!-- ============ main ============ -->
+  <div class="main">
+    <header class="head">
+      <h1 id="title">Process flows</h1>
+      <span class="crumb" id="crumb"></span>
+      <span class="spacer"></span>
+      <div class="toggle" role="group" aria-label="Which node am I looking at">
+        <button id="tgSite"  aria-pressed="true"  onclick="setRole('site')">SITE</button>
+        <button id="tgEdge"  aria-pressed="false" onclick="setRole('edge')">EDGE</button>
+      </div>
+      <span class="user">m.molina</span>
+    </header>
+
+    <main class="content" id="content"></main>
+  </div>
+</div>
+
+<script>
+/* ---------------------------------------------------------------
+   Mock data — taken from VIB Appendix 06, Annex 1
+----------------------------------------------------------------*/
+const FLOWS = [
+  {part:'MATERIAL-1', flow:'FLOW1', steps:6, v:12, status:'published'},
+  {part:'MATERIAL-2', flow:'FLOW1', steps:4, v:9,  status:'published'},
+  {part:'MATERIAL-7', flow:'FLOW2', steps:8, v:3,  status:'draft'},
+];
+
+const STEPS = [
+  {id:11001, name:'Housing Screwing',    ops:4, stations:'ST060.1, ST060.2'},
+  {id:11002, name:'Body Sub Assembly 1', ops:2, stations:'ST070'},
+  {id:11003, name:'Body Sub Assembly 2', ops:2, stations:'ST080'},
+  {id:11004, name:'Assembly Gear',       ops:3, stations:'ST100'},
+  {id:11005, name:'Final Test',          ops:6, stations:'ST110'},
+  {id:11006, name:'Packing',             ops:1, stations:'ST120'},
+];
+
+const OPS = {
+  11001:[
+    {id:123021,name:'Screw 1',n:2},{id:123022,name:'Screw 2',n:2},
+    {id:123023,name:'Screw 3',n:2},{id:123024,name:'Screw 4',n:3},
+  ]
+};
+
+const RDEFS = {
+  123021:[
+    {id:50032,name:'Angle', type:'numeric',cat:'measurement',uom:'DD',nom:90,
+     lsl:80,lal:85,ual:95,usl:100,mand:true,auto:false},
+    {id:50033,name:'Torque',type:'numeric',cat:'measurement',uom:'NU',nom:5.0,
+     lsl:5.5,lal:4.7,ual:5.3,usl:4.5,mand:true,auto:false,
+     err:'LSL 5.5 is above USL 4.5 — limits appear inverted. Check the source data.'},
+  ],
+  123024:[
+    {id:50129,name:'Barcode read',type:'text',cat:'measurement',uom:'',nom:null,
+     lsl:null,lal:null,ual:null,usl:null,mand:false,auto:false},
+    {id:50130,name:'(unnamed)',type:'numeric',cat:'measurement',uom:'',nom:null,
+     lsl:null,lal:null,ual:null,usl:null,mand:false,auto:true},
+  ]
+};
+
+const STATIONS = ['ST060.1','ST060.2','ST070','ST080','ST100','ST110','ST120'];
+const MATRIX = {
+  'ST060.1':[11001], 'ST060.2':[11001], 'ST070':[11002], 'ST080':[11003],
+  'ST100':[11004], 'ST110':[11005], 'ST120':[11006],
+};
+
+const LOG = [
+  {t:'11:15:21',src:'sim-01',status:'RECORDED',           lat:6.8, reasons:[]},
+  {t:'11:15:19',src:'sim-01',status:'RECORDED_DEGRADED',  lat:8.4, reasons:['UNKNOWN_RESULT_DEF']},
+  {t:'11:15:17',src:'ext-mi3',status:'RECORDED_PARTIAL',  lat:9.1, reasons:['COUNT_MISMATCH']},
+  {t:'11:15:15',src:'sim-01',status:'DUPLICATE_IGNORED',  lat:0.9, reasons:[]},
+  {t:'11:15:13',src:'sim-01',status:'RECORDED_DEGRADED',  lat:7.7, reasons:['NO_SERIAL','UNKNOWN_PART']},
+  {t:'11:15:12',src:'sim-01',status:'REJECTED_UNPARSEABLE',lat:2.2,reasons:[]},
+  {t:'11:15:09',src:'sim-01',status:'RECORDED',           lat:6.4, reasons:[]},
+];
+
+const RAW = `{
+  "telegramCounter": 84211,
+  "processContext": {
+    "stationId": 10001,
+    "processStepId": 11001,
+    "stepResult": 1,
+    "wpcNo": 587,
+    "cycleTime": 35.12
+  },
+  "productContext": {
+    "partNumber": "MATERIAL-1",
+    "serialNo": "cee348d8-daa0-4730-8d5e-ac59311af94b"
+  },
+  "processResults": [
+    { "seq": 0, "processOperationId": 123021,
+      "processResultId": 50032, "valueNumeric": 90.2 },
+    { "seq": 1, "processOperationId": 123021,
+      "processResultId": 50033, "valueNumeric": 5.12 },
+    { "seq": 8, "processOperationId": 123024,
+      "processResultId": 50130, "valueNumeric": 4.81 }
+  ]
+}`;
+
+/* ---------------------------------------------------------------
+   Signature element — the four-limit tolerance band
+----------------------------------------------------------------*/
+function band(d, value){
+  if(d.lsl==null||d.usl==null)
+    return `<div class="note">No limits defined — values recorded without comparison.</div>`;
+
+  const lo = Math.min(d.lsl,d.usl), hi = Math.max(d.lsl,d.usl);
+  const lal = Math.min(d.lal,d.ual), ual = Math.max(d.lal,d.ual);
+  const pad = (hi-lo)*0.18, min = lo-pad, max = hi+pad, W = 100;
+  const x = v => ((v-min)/(max-min))*W;
+
+  const marker = value==null ? '' : `
+    <line x1="${x(value)}" y1="1" x2="${x(value)}" y2="21" stroke="var(--ink)" stroke-width="1.4"/>
+    <polygon points="${x(value)-3.2},0 ${x(value)+3.2},0 ${x(value)},4" fill="var(--ink)"/>`;
+
+  return `
+  <svg class="band" viewBox="0 0 100 32" width="100%" height="32" preserveAspectRatio="none"
+       role="img" aria-label="Tolerance band from ${d.lsl} to ${d.usl}">
+    <rect x="0" y="8" width="100" height="7" fill="var(--bad-tint)"/>
+    <rect x="${x(lo)}" y="8" width="${x(hi)-x(lo)}" height="7" fill="var(--warn-tint)"/>
+    <rect x="${x(lal)}" y="8" width="${x(ual)-x(lal)}" height="7" fill="var(--ok-tint)"/>
+    <line x1="${x(lo)}"  y1="6" x2="${x(lo)}"  y2="17" stroke="var(--bad)"  stroke-width=".8"/>
+    <line x1="${x(hi)}"  y1="6" x2="${x(hi)}"  y2="17" stroke="var(--bad)"  stroke-width=".8"/>
+    <line x1="${x(lal)}" y1="6" x2="${x(lal)}" y2="17" stroke="var(--warn)" stroke-width=".8"/>
+    <line x1="${x(ual)}" y1="6" x2="${x(ual)}" y2="17" stroke="var(--warn)" stroke-width=".8"/>
+    ${d.nom!=null?`<line x1="${x(d.nom)}" y1="7" x2="${x(d.nom)}" y2="16"
+        stroke="var(--ok)" stroke-width=".8" stroke-dasharray="1.5 1.5"/>`:''}
+    ${marker}
+  </svg>
+  <div class="band-legend">
+    <i><span class="swatch" style="background:var(--bad-tint);border:1px solid var(--bad)"></span>out of spec</i>
+    <i><span class="swatch" style="background:var(--warn-tint);border:1px solid var(--warn)"></span>alert band</i>
+    <i><span class="swatch" style="background:var(--ok-tint);border:1px solid var(--ok)"></span>nominal band</i>
+    ${value!=null?`<i>measured <b>${value}</b> ${d.uom}</i>`:''}
+  </div>`;
+}
+
+/* ---------------------------------------------------------------
+   State
+----------------------------------------------------------------*/
+let role   = 'site';
+let screen = 'flows';
+let sel    = {step:11001, op:123021, filter:'all', open:null};
+
+const SCREENS = {
+  flows:  {n:'01', label:'Process flows', title:'Process flows',        roles:['site']},
+  editor: {n:'02', label:'Flow editor',   title:'MATERIAL-1 / FLOW1',   roles:['site','edge']},
+  matrix: {n:'03', label:'Station matrix',title:'Station assignment',   roles:['site']},
+  log:    {n:'04', label:'Ingest log',    title:'Ingest log',           roles:['edge']},
+};
+
+function setRole(r){
+  role = r;
+  document.getElementById('tgSite').setAttribute('aria-pressed', r==='site');
+  document.getElementById('tgEdge').setAttribute('aria-pressed', r==='edge');
+  document.getElementById('railRole').textContent = r;
+  if(!SCREENS[screen].roles.includes(r))
+    screen = r==='site' ? 'flows' : 'editor';
+  render();
+}
+function go(s){ screen = s; render(); }
+
+/* ---------------------------------------------------------------
+   Screens
+----------------------------------------------------------------*/
+function viewFlows(){
+  return `
+  <div class="banner">
+    <strong>1 value definition needs naming.</strong>
+    A station sent result ID 50130, which was not in the model. It was recorded and a
+    placeholder created — give it a name and limits.
+    <span class="spacer"></span>
+    <button class="btn" onclick="sel.step=11001;sel.op=123024;go('editor')">Review</button>
+  </div>
+
+  <div class="card">
+    <div class="card-h">
+      <h2>Process flows</h2>
+      <span class="sub">3 parts configured</span>
+      <span class="spacer"></span>
+      <input class="field" placeholder="Search part number" aria-label="Search part number">
+      <button class="btn">Import CSV</button>
+      <button class="btn primary">New flow</button>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Part number</th><th>Flow</th><th class="num">Steps</th>
+        <th class="num">Version</th><th>Status</th><th></th>
+      </tr></thead>
+      <tbody>
+      ${FLOWS.map(f=>`
+        <tr>
+          <td class="id">${f.part}</td>
+          <td class="mono">${f.flow}</td>
+          <td class="num">${f.steps}</td>
+          <td class="num">v${f.v}</td>
+          <td><span class="pill ${f.status==='published'?'p-ok':'p-mute'}">${f.status}</span></td>
+          <td style="text-align:right"><button class="btn" onclick="go('editor')">Open</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function viewEditor(){
+  const ops   = OPS[sel.step] || [];
+  const rdefs = RDEFS[sel.op] || [];
+
+  const conflict = role==='edge' ? `
+    <div class="banner conflict">
+      <strong>This change was rejected by Site.</strong>
+      <div style="font-size:12.5px">
+        You set <code>50032</code> USL to <b>102</b> from version v12.
+        Site has since moved to v13, where USL is <b>105</b> (m.molina).
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn">Keep mine (102)</button>
+        <button class="btn primary">Take Site's (105)</button>
+      </div>
+    </div>` : '';
+
+  return `
+  ${conflict}
+  <div class="panes">
+
+    <div class="card">
+      <div class="card-h editor-pane-header">
+        <div class="card-title-group">
+          <h2>Process steps</h2>
+          <span class="sub">drag to reorder</span>
+        </div>
+        <button class="btn" type="button">Add step</button>
+      </div>
+      <ul class="pane-list">
+        ${STEPS.map((s,i)=>`
+          <li><button aria-current="${s.id===sel.step}" onclick="sel.step=${s.id};sel.op=${(OPS[s.id]||[{id:0}])[0].id};render()">
+            <span class="grip" aria-hidden="true">⠿</span>
+            <span class="ord">${i+1}</span>
+            <span class="nm"><span class="id">${s.id}</span> ${s.name}</span>
+            <span class="ct">${s.ops}</span>
+          </button></li>`).join('')}
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-h editor-pane-header">
+        <div class="card-title-group">
+          <h2>Operations</h2>
+        </div>
+        <button class="btn" type="button">Add operation</button>
+      </div>
+      ${ops.length?`
+      <ul class="pane-list">
+        ${ops.map(o=>`
+          <li><button aria-current="${o.id===sel.op}" onclick="sel.op=${o.id};render()">
+            <span class="nm"><span class="id">${o.id}</span> ${o.name}</span>
+            <span class="ct">${o.n}</span>
+          </button></li>`).join('')}
+      </ul>`
+      :`<div class="empty">No operations defined for this step yet.<br>
+          <button class="btn primary" style="margin-top:12px">Add the first operation</button></div>`}
+    </div>
+
+    <div class="card">
+      <div class="card-h">
+        <h2>Value definitions</h2>
+        <span class="sub">${rdefs.length} defined</span>
+        <span class="spacer"></span>
+        <button class="btn">Validate</button>
+        <button class="btn primary">Publish v13</button>
+      </div>
+      ${rdefs.length? rdefs.map(d=>`
+        <div class="rdef">
+          <div class="rdef-top">
+            <span class="id">${d.id}</span>
+            <span class="nm">${d.name}</span>
+            <span class="pill p-mute">${d.type}</span>
+            <span class="pill p-mute">${d.cat}</span>
+            ${d.uom?`<span class="pill p-mute">${d.uom}</span>`:''}
+            ${d.mand?`<span class="pill p-ok">mandatory</span>`:''}
+            ${d.auto?`<span class="pill p-deg">created automatically</span>`:''}
+            <span class="spacer"></span>
+            ${d.nom!=null?`<span class="mono" style="color:var(--ink-2);font-size:12px">nominal ${d.nom}</span>`:''}
+          </div>
+
+          ${band(d, null)}
+
+          <div class="limits">
+            <div><label>LSL</label><input value="${d.lsl??''}" placeholder="—"></div>
+            <div><label>LAL</label><input value="${d.lal??''}" placeholder="—"></div>
+            <div><label>Nominal</label><input value="${d.nom??''}" placeholder="—"></div>
+            <div><label>UAL</label><input value="${d.ual??''}" placeholder="—"></div>
+            <div><label>USL</label><input value="${d.usl??''}" placeholder="—"></div>
+          </div>
+
+          ${d.err?`<div class="inline-err"><strong>Blocks publish.</strong> ${d.err}</div>`:''}
+          ${d.auto?`<div class="note">Recorded 47 times since 02:14 today. Naming it will not change
+             the values already stored.</div>`:''}
+        </div>`).join('')
+      :`<div class="empty">This operation records nothing yet.</div>`}
+      <div style="padding:12px 16px;border-top:1px solid var(--rule-2)">
+        <button class="btn">Add value definition</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function viewMatrix(){
+  return `
+  <div class="card">
+    <div class="card-h">
+      <h2>Station assignment</h2>
+      <span class="sub">LINE-1 · work centre APU1_NOC5</span>
+      <span class="spacer"></span>
+      <span class="note" style="margin:0">Two stations may run the same step.</span>
+    </div>
+    <table class="matrix">
+      <thead><tr>
+        <th>Station</th>
+        ${STEPS.map(s=>`<th class="rot">${s.id}</th>`).join('')}
+      </tr></thead>
+      <tbody>
+      ${STATIONS.map(st=>`
+        <tr>
+          <td class="stn">${st}</td>
+          ${STEPS.map(s=>`<td>
+            <input type="checkbox" ${MATRIX[st].includes(s.id)?'checked':''}
+                   aria-label="${st} runs step ${s.id}">
+          </td>`).join('')}
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div class="note">Columns are process step IDs. ST060.1 and ST060.2 both run 11001 Housing Screwing.</div>`;
+}
+
+function statusPill(s){
+  const m = {
+    RECORDED:'p-ok', RECORDED_DEGRADED:'p-deg', RECORDED_PARTIAL:'p-warn',
+    DUPLICATE_IGNORED:'p-mute', REJECTED_UNPARSEABLE:'p-bad', SYSTEM_UNAVAILABLE:'p-bad'
+  };
+  return `<span class="pill ${m[s]||'p-mute'}">${s}</span>`;
+}
+
+function viewLog(){
+  const rows = LOG.filter(r=>
+    sel.filter==='all' ? true :
+    sel.filter==='degraded' ? r.status.includes('DEGRADED')||r.status.includes('PARTIAL') :
+    r.status.startsWith('REJECTED')||r.status.startsWith('SYSTEM'));
+
+  return `
+  <div class="card">
+    <div class="card-h">
+      <h2>Ingest log</h2>
+      <span class="sub">every attempt, with the message exactly as received</span>
+      <span class="spacer"></span>
+      <div class="filters">
+        <button class="chip" aria-pressed="${sel.filter==='all'}"      onclick="sel.filter='all';render()">All</button>
+        <button class="chip" aria-pressed="${sel.filter==='degraded'}" onclick="sel.filter='degraded';render()">Degraded</button>
+        <button class="chip" aria-pressed="${sel.filter==='failed'}"   onclick="sel.filter='failed';render()">Failed</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr>
+        <th style="width:26px"></th><th>Time</th><th>Source</th><th>Status</th>
+        <th class="num">Latency</th><th>Reasons</th>
+      </tr></thead>
+      <tbody>
+      ${rows.length? rows.map((r,i)=>`
+        <tr>
+          <td><button class="rowbtn" onclick="sel.open = sel.open===${i}?null:${i};render()"
+                aria-expanded="${sel.open===i}" aria-label="Show raw message">
+              <span class="caret">${sel.open===i?'▾':'▸'}</span></button></td>
+          <td class="mono">${r.t}</td>
+          <td class="mono">${r.src}</td>
+          <td>${statusPill(r.status)}</td>
+          <td class="num">${r.lat.toFixed(1)} ms</td>
+          <td>${r.reasons.map(x=>`<span class="pill p-deg">${x}</span>`).join(' ')||
+              '<span style="color:var(--ink-3)">—</span>'}</td>
+        </tr>
+        ${sel.open===i?`<tr class="expand"><td colspan="6"><pre>${
+          RAW.replace(/"([^"]+)":/g,'<span class="k">"$1"</span>:')
+             .replace(/: "([^"]*)"/g,': <span class="s">"$1"</span>')
+             .replace(/: (-?\\d+\\.?\\d*)/g,': <span class="n">$1</span>')
+        }</pre></td></tr>`:''}
+      `).join('')
+      :`<tr><td colspan="6"><div class="empty">Nothing matches this filter in the last 15 minutes.</div></td></tr>`}
+      </tbody>
+    </table>
+  </div>
+  <div class="note">Rejected messages are kept here too, with the raw body, so nothing is ever lost.</div>`;
+}
+
+/* ---------------------------------------------------------------
+   Render
+----------------------------------------------------------------*/
+function render(){
+  const nav = document.getElementById('nav');
+  nav.innerHTML = Object.entries(SCREENS)
+    .filter(([,s])=>s.roles.includes(role))
+    .map(([k,s])=>`
+      <button ${screen===k?'aria-current="page"':''} onclick="go('${k}')">
+        <span class="num">${s.n}</span><span class="lbl">${s.label}</span>
+      </button>`).join('');
+
+  document.getElementById('title').textContent = SCREENS[screen].title;
+  document.getElementById('crumb').textContent =
+    role==='edge' ? '· edge, local copy' : '· site, master';
+
+  const body = {flows:viewFlows, editor:viewEditor, matrix:viewMatrix, log:viewLog}[screen];
+  document.getElementById('content').innerHTML = body();
+}
+render();
+</script>
+</body>
+</html>
+

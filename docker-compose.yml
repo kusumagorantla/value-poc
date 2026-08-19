@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  jarvis-db:
+    image: postgres:17-alpine
+    container_name: jarvis-postgres
+    environment:
+      POSTGRES_DB: jarvis_traceability
+      POSTGRES_USER: jarvis_user
+      POSTGRES_PASSWORD: jarvis_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  jarvis-api:
+    build:
+      context: ./src/Jarvis.Traceability.Api
+      dockerfile: Dockerfile
+    container_name: jarvis-backend-api
+    ports:
+      - "5000:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=jarvis-db;Database=jarvis_traceability;Username=jarvis_user;Password=jarvis_password
+    depends_on:
+      - jarvis-db
+
+  jarvis-ui:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: jarvis-react-ui
+    ports:
+      - "80:80"
+    depends_on:
+      - jarvis-api
+
+  jarvis-grafana:
+    image: grafana/grafana:10.2.0
+    container_name: jarvis-grafana-reports
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - jarvis-db
+
+volumes:
+  pgdata:

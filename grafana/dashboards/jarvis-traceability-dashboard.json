@@ -1,0 +1,85 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Total Processed Parts Count",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "datasource": "PostgreSQL-JarvisTraceability",
+          "rawSql": "SELECT COUNT(*) FROM process_result_records;",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Degraded Mode Incidents Count",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        {
+          "datasource": "PostgreSQL-JarvisTraceability",
+          "rawSql": "SELECT COUNT(*) FROM process_result_records WHERE storage_mode = 'DEGRADED_MISSING_CONTEXT';",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Average API Response Latency (ms)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "datasource": "PostgreSQL-JarvisTraceability",
+          "rawSql": "SELECT AVG(latency_ms) FROM recording_audit_logs;",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "SLA Compliance Rate (<50ms %)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        {
+          "datasource": "PostgreSQL-JarvisTraceability",
+          "rawSql": "SELECT (COUNT(CASE WHEN latency_ms <= 50 THEN 1 END) * 100.0 / COUNT(*)) AS sla_rate FROM recording_audit_logs;",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Torque & Angle Trend Analysis",
+      "type": "timeseries",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 6 },
+      "targets": [
+        {
+          "datasource": "PostgreSQL-JarvisTraceability",
+          "rawSql": "SELECT created_at AS time, value_numeric AS value, result_code FROM process_result_values JOIN process_result_records ON process_result_values.record_id = process_result_records.id WHERE value_numeric IS NOT NULL ORDER BY time;",
+          "format": "time_series"
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["valeo", "mom", "traceability"],
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "Valeo MOM — Quality Analytics & Line Traceability Dashboard",
+  "uid": "valeo-jarvis-quality-dashboard"
+}

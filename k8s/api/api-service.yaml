@@ -1,0 +1,36 @@
+# k8s/api/api-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: jarvis-api-svc
+  namespace: jarvis
+  labels:
+    app: jarvis-api
+    component: backend
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: jarvis-api
+---
+# Optional: NodePort for external access
+apiVersion: v1
+kind: Service
+metadata:
+  name: jarvis-api-nodeport
+  namespace: jarvis
+  labels:
+    app: jarvis-api
+    component: backend
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30050
+      protocol: TCP
+  selector:
+    app: jarvis-api
