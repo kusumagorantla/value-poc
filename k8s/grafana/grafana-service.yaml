@@ -1,0 +1,36 @@
+# k8s/grafana/grafana-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: jarvis-grafana-svc
+  namespace: jarvis
+  labels:
+    app: jarvis-grafana
+    component: monitoring
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+  selector:
+    app: jarvis-grafana
+---
+# Optional: NodePort for external access
+apiVersion: v1
+kind: Service
+metadata:
+  name: jarvis-grafana-nodeport
+  namespace: jarvis
+  labels:
+    app: jarvis-grafana
+    component: monitoring
+spec:
+  type: NodePort
+  ports:
+    - port: 3000
+      targetPort: 3000
+      nodePort: 30030
+      protocol: TCP
+  selector:
+    app: jarvis-grafana

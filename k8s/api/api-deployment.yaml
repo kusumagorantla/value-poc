@@ -1,0 +1,75 @@
+# k8s/api/api-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jarvis-api
+  namespace: jarvis
+  labels:
+    app: jarvis-api
+    component: backend
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: jarvis-api
+  template:
+    metadata:
+      labels:
+        app: jarvis-api
+        component: backend
+    spec:
+      containers:
+        - name: jarvis-api
+          # Use JFrog image - update version as needed
+          image: valeodemo.jfrog.io/docker-local/jarvis-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: jarvis-secrets
+                  key: CONNECTION_STRING
+            - name: ASPNETCORE_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: api-config
+                  key: ASPNETCORE_ENVIRONMENT
+            - name: ASPNETCORE_URLS
+              valueFrom:
+                configMapKeyRef:
+                  name: api-config
+                  key: ASPNETCORE_URLS
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+      # Pull secret for JFrog (if needed)
+      # imagePullSecrets:
+      #   - name: jfrog-secret
