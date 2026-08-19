@@ -3,14 +3,12 @@ name: Build and Push to JFrog Artifactory
 on:
   push:
     branches: [main, develop]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 env:
-  JFROG_URL: ${{ secrets.JFROG_URL }}
-  DOCKER_REPO: docker-local          # Your JFrog Docker repository name
-  ARTIFACT_REPO: generic-local       # Your JFrog Artifacts repository name
+  JFROG_URL: http://34.163.157.242:8082
+  DOCKER_REPO: docker-local
+  ARTIFACT_REPO: generic-local
   API_IMAGE_NAME: jarvis-api
   UI_IMAGE_NAME: jarvis-ui
 
@@ -22,29 +20,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Generate version tags
         id: version
         run: |
           BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed 's/\//-/g')
           SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          
           VERSION="${BRANCH_NAME}-${SHORT_SHA}-${TIMESTAMP}"
-          
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "branch=${BRANCH_NAME}" >> $GITHUB_OUTPUT
-          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "timestamp=${TIMESTAMP}" >> $GITHUB_OUTPUT
-
-      - name: Docker Login to JFrog
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.JFROG_URL }}
-          username: ${{ secrets.JFROG_USER }}
-          password: ${{ secrets.JFROG_PASSWORD }}
 
       - name: Configure JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
@@ -53,6 +37,16 @@ jobs:
           user: ${{ secrets.JFROG_USER }}
           password: ${{ secrets.JFROG_PASSWORD }}
 
+      - name: Configure Docker to use JFrog
+        run: |
+          # Configure JFrog as Docker registry
+          jfrog rt docker-push --help || true
+          
+          # Set up docker config for JFrog
+          mkdir -p ~/.docker
+          echo "${{ secrets.JFROG_PASSWORD }}" | docker login 34.163.157.242:8082 -u "${{ secrets.JFROG_USER }}" --password-stdin 2>/dev/null || \
+          echo "Direct docker login failed, will use JFrog CLI"
+
       # ============================================
       # BUILD JARVIS API IMAGE
       # ============================================
@@ -60,189 +54,74 @@ jobs:
         run: |
           docker build \
             -f ./src/Jarvis.Traceability.Api/Dockerfile \
-            -t ${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.version }} \
-            -t ${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:latest \
-            -t ${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.branch }} \
+            -t 34.163.157.242:8082/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.version }} \
+            -t 34.163.157.242:8082/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:latest \
             ./src/Jarvis.Traceability.Api
 
-      - name: Push jarvis-api image to JFrog
+      - name: Push jarvis-api to JFrog
         run: |
-          docker push ${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.version }}
-          docker push ${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:latest
-          docker push ${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.branch }}
+          jfrog rt docker-push \
+            34.163.157.242:8082/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.version }} \
+            ${{ env.DOCKER_REPO }} \
+            --build-name=jarvis-api --build-number=${{ steps.version.outputs.version }}
+          
+          jfrog rt docker-push \
+            34.163.157.242:8082/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:latest \
+            ${{ env.DOCKER_REPO }}
 
       # ============================================
-      # BUILD JARVIS UI IMAGE
+      # BUILD JARVIS UI IMAGE  
       # ============================================
       - name: Build jarvis-ui image
         run: |
           docker build \
             -f ./frontend/Dockerfile \
-            -t ${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.version }} \
-            -t ${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:latest \
-            -t ${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.branch }} \
+            -t 34.163.157.242:8082/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.version }} \
+            -t 34.163.157.242:8082/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:latest \
             ./frontend
 
-      - name: Push jarvis-ui image to JFrog
+      - name: Push jarvis-ui to JFrog
         run: |
-          docker push ${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.version }}
-          docker push ${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:latest
-          docker push ${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.branch }}
+          jfrog rt docker-push \
+            34.163.157.242:8082/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.version }} \
+            ${{ env.DOCKER_REPO }} \
+            --build-name=jarvis-ui --build-number=${{ steps.version.outputs.version }}
+          
+          jfrog rt docker-push \
+            34.163.157.242:8082/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:latest \
+            ${{ env.DOCKER_REPO }}
 
       # ============================================
-      # CREATE AND UPLOAD ARTIFACTS
+      # UPLOAD ARTIFACTS
       # ============================================
-      - name: Create build artifacts
+      - name: Create artifacts
         run: |
-          # Create artifacts directory
           mkdir -p artifacts
-          
-          # Copy docker-compose file
           cp docker-compose.yml artifacts/
           
-          # Copy Dockerfiles
-          mkdir -p artifacts/dockerfiles
-          cp ./src/Jarvis.Traceability.Api/Dockerfile artifacts/dockerfiles/jarvis-api.Dockerfile
-          cp ./frontend/Dockerfile artifacts/dockerfiles/jarvis-ui.Dockerfile
-          
-          # Copy Grafana configs if they exist
-          if [ -d "./grafana" ]; then
-            cp -r ./grafana artifacts/grafana-configs
-          fi
-          
-          # Create build info file
           cat > artifacts/build-info.json << EOF
           {
             "version": "${{ steps.version.outputs.version }}",
             "branch": "${{ steps.version.outputs.branch }}",
             "commit": "${{ github.sha }}",
-            "short_sha": "${{ steps.version.outputs.short_sha }}",
-            "timestamp": "${{ steps.version.outputs.timestamp }}",
-            "build_number": "${{ github.run_number }}",
-            "run_id": "${{ github.run_id }}",
-            "actor": "${{ github.actor }}",
             "images": {
-              "jarvis-api": "${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.version }}",
-              "jarvis-ui": "${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.version }}"
+              "jarvis-api": "34.163.157.242:8082/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.version }}",
+              "jarvis-ui": "34.163.157.242:8082/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.version }}"
             }
           }
           EOF
-          
-          # Create a deployment docker-compose for JFrog images
-          cat > artifacts/docker-compose-jfrog.yml << EOF
-          version: '3.8'
-          
-          services:
-            jarvis-db:
-              image: postgres:17-alpine
-              container_name: jarvis-postgres
-              environment:
-                POSTGRES_DB: jarvis_traceability
-                POSTGRES_USER: jarvis_user
-                POSTGRES_PASSWORD: jarvis_password
-              ports:
-                - "5432:5432"
-              volumes:
-                - pgdata:/var/lib/postgresql/data
-          
-            jarvis-api:
-              image: ${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.version }}
-              container_name: jarvis-backend-api
-              ports:
-                - "5000:8080"
-              environment:
-                - ConnectionStrings__DefaultConnection=Host=jarvis-db;Database=jarvis_traceability;Username=jarvis_user;Password=jarvis_password
-              depends_on:
-                - jarvis-db
-          
-            jarvis-ui:
-              image: ${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.version }}
-              container_name: jarvis-react-ui
-              ports:
-                - "80:80"
-              depends_on:
-                - jarvis-api
-          
-            jarvis-grafana:
-              image: grafana/grafana:10.2.0
-              container_name: jarvis-grafana-reports
-              ports:
-                - "3000:3000"
-              volumes:
-                - ./grafana/provisioning:/etc/grafana/provisioning
-                - ./grafana/dashboards:/var/lib/grafana/dashboards
-              depends_on:
-                - jarvis-db
-          
-          volumes:
-            pgdata:
-          EOF
-          
-          # Create tarball
-          tar -czvf jarvis-deployment-${{ steps.version.outputs.version }}.tar.gz artifacts/
 
       - name: Upload artifacts to JFrog
         run: |
-          # Upload the tarball
-          jfrog rt upload \
-            "jarvis-deployment-${{ steps.version.outputs.version }}.tar.gz" \
-            "${{ env.ARTIFACT_REPO }}/jarvis/deployments/${{ steps.version.outputs.version }}/" \
-            --props "branch=${{ steps.version.outputs.branch }};commit=${{ steps.version.outputs.short_sha }}"
-          
-          # Upload individual files for easier access
-          jfrog rt upload \
-            "artifacts/docker-compose.yml" \
-            "${{ env.ARTIFACT_REPO }}/jarvis/configs/" \
-            --props "type=compose"
-          
-          jfrog rt upload \
-            "artifacts/docker-compose-jfrog.yml" \
-            "${{ env.ARTIFACT_REPO }}/jarvis/configs/" \
-            --props "type=compose-jfrog"
-          
-          jfrog rt upload \
-            "artifacts/build-info.json" \
-            "${{ env.ARTIFACT_REPO }}/jarvis/builds/${{ steps.version.outputs.version }}/" \
-            --props "branch=${{ steps.version.outputs.branch }}"
+          jfrog rt upload "artifacts/*" "${{ env.ARTIFACT_REPO }}/jarvis/${{ steps.version.outputs.version }}/" \
+            --build-name=jarvis-build --build-number=${{ steps.version.outputs.version }}
 
-          # Upload Dockerfiles
-          jfrog rt upload \
-            "artifacts/dockerfiles/*" \
-            "${{ env.ARTIFACT_REPO }}/jarvis/dockerfiles/" \
-            --props "type=dockerfile"
-
-      - name: Publish Build Info to JFrog
+      - name: Publish build info
         run: |
-          jfrog rt build-add-files "jarvis-deployment-${{ steps.version.outputs.version }}.tar.gz"
           jfrog rt build-publish
 
-      # ============================================
-      # SUMMARY
-      # ============================================
-      - name: Print Summary
+      - name: Summary
         run: |
-          echo "============================================"
-          echo "🚀 DEPLOYMENT SUMMARY"
-          echo "============================================"
-          echo ""
-          echo "📦 Version: ${{ steps.version.outputs.version }}"
-          echo "🌿 Branch: ${{ steps.version.outputs.branch }}"
-          echo "🔗 Commit: ${{ github.sha }}"
-          echo ""
-          echo "🐳 Docker Images Pushed:"
-          echo "   - ${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.version }}"
-          echo "   - ${{ env.JFROG_URL }}/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.version }}"
-          echo ""
-          echo "📁 Artifacts Uploaded:"
-          echo "   - ${{ env.ARTIFACT_REPO }}/jarvis/deployments/${{ steps.version.outputs.version }}/jarvis-deployment-${{ steps.version.outputs.version }}.tar.gz"
-          echo "   - ${{ env.ARTIFACT_REPO }}/jarvis/configs/docker-compose-jfrog.yml"
-          echo "   - ${{ env.ARTIFACT_REPO }}/jarvis/builds/${{ steps.version.outputs.version }}/build-info.json"
-          echo ""
-          echo "============================================"
-
-      - name: Upload to GitHub Artifacts (backup)
-        uses: actions/upload-artifact@v4
-        with:
-          name: jarvis-deployment-${{ steps.version.outputs.version }}
-          path: artifacts/
-          retention-days: 30
+          echo "✅ Images pushed:"
+          echo "   - 34.163.157.242:8082/${{ env.DOCKER_REPO }}/${{ env.API_IMAGE_NAME }}:${{ steps.version.outputs.version }}"
+          echo "   - 34.163.157.242:8082/${{ env.DOCKER_REPO }}/${{ env.UI_IMAGE_NAME }}:${{ steps.version.outputs.version }}"
