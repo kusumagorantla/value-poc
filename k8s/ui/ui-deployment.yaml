@@ -26,7 +26,7 @@ spec:
       containers:
         - name: jarvis-ui
           # Use JFrog image
-          image: valeodemo.jfrog.io/docker-local/jarvis-ui:main-dfeb261-20260820054341
+          image: valeodemo.jfrog.io/docker-local/jarvis-ui:main-264f040-20260820055625
           imagePullPolicy: Always
           ports:
             - containerPort: 80
