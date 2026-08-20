@@ -1,0 +1,76 @@
+# docker-compose-deploy.yml
+version: '3.8'
+
+services:
+  jarvis-db:
+    image: postgres:17-alpine
+    container_name: jarvis-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: jarvis_traceability
+      POSTGRES_USER: jarvis_user
+      POSTGRES_PASSWORD: jarvis_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jarvis_user -d jarvis_traceability"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - jarvis-network
+
+  jarvis-api:
+    image: valeodemo.jfrog.io/docker-local/jarvis-api:latest
+    container_name: jarvis-backend-api
+    restart: unless-stopped
+    ports:
+      - "5000:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=jarvis-db;Database=jarvis_traceability;Username=jarvis_user;Password=jarvis_password
+    depends_on:
+      jarvis-db:
+        condition: service_healthy
+    networks:
+      - jarvis-network
+
+  jarvis-ui:
+    image: valeodemo.jfrog.io/docker-local/jarvis-ui:latest
+    container_name: jarvis-react-ui
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - jarvis-api
+    networks:
+      - jarvis-network
+
+  jarvis-grafana:
+    image: grafana/grafana:10.2.0
+    container_name: jarvis-grafana-reports
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      jarvis-db:
+        condition: service_healthy
+    networks:
+      - jarvis-network
+
+volumes:
+  pgdata:
+  grafana-data:
+
+networks:
+  jarvis-network:
+    driver: bridge
