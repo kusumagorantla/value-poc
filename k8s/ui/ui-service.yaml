@@ -8,12 +8,11 @@ metadata:
     app: jarvis-ui
     component: frontend
   annotations:
-    # GKE specific annotations (optional)
     cloud.google.com/load-balancer-type: "External"
-    # Optional: Set static IP (uncomment if you have reserved IP)
     cloud.google.com/load-balancer-ipv4: "34.163.140.113"
 spec:
   type: LoadBalancer
+  loadBalancerIP: "34.163.140.113" 
   ports:
     - port: 80
       targetPort: 80
