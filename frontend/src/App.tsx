@@ -197,7 +197,7 @@ function App() {
         }}>
           <div>
             <h1 style={{ fontSize: '15px', fontWeight: 600, letterSpacing: '-0.01em', margin: 0, color: 'var(--ink)' }}>
-              Flow Editor <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}>/ {activeTab === 'site-admin' ? 'Site Central' : activeTab === 'edge-console' ? 'Edge PC Line Modeler' : activeTab === 'grafana' ? 'Grafana Traceability Dashboard' : activeTab === 'plc-simulator' ? 'PLC Cycle Simulator' : 'AI SDLC Governance'}</span>
+              Flow Editor <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}>/ {activeTab === 'site-admin' ? 'Site Central Process Modeler' : activeTab === 'edge-console' ? 'Edge PC Line Modeler' : activeTab === 'grafana' ? 'Grafana Traceability Dashboard' : activeTab === 'plc-simulator' ? 'PLC Cycle Simulator' : 'AI SDLC Governance'}</span>
             </h1>
             <div style={{ fontSize: '11.5px', color: 'var(--ink-3)', fontFamily: "'IBM Plex Mono', monospace", marginTop: '1px' }}>
               Material Ref: <strong style={{ color: 'var(--accent)' }}>MATERIAL-1</strong> · Flow Code: <strong style={{ color: 'var(--accent)' }}>FLOW1</strong>
