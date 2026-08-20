@@ -4,33 +4,13 @@ kind: Service
 metadata:
   name: jarvis-grafana-svc
   namespace: jarvis
-  labels:
-    app: jarvis-grafana
-    component: monitoring
+  annotations:
+    cloud.google.com/load-balancer-ipv4: "34.155.209.143"  # Your reserved IP
 spec:
-  type: ClusterIP
+  type: LoadBalancer
+  loadBalancerIP: "34.155.209.143"
   ports:
     - port: 3000
       targetPort: 3000
-      protocol: TCP
-  selector:
-    app: jarvis-grafana
----
-# Optional: NodePort for external access
-apiVersion: v1
-kind: Service
-metadata:
-  name: jarvis-grafana-nodeport
-  namespace: jarvis
-  labels:
-    app: jarvis-grafana
-    component: monitoring
-spec:
-  type: NodePort
-  ports:
-    - port: 3000
-      targetPort: 3000
-      nodePort: 30030
-      protocol: TCP
   selector:
     app: jarvis-grafana
